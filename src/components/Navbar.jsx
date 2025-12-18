@@ -35,12 +35,12 @@ export default function Navbar() {
   return (
     <nav className="bg-white dark:bg-[#0b1320] border-b border-gray-200 dark:border-[#1c2940] text-black dark:text-white px-8 py-4 flex justify-between items-center">
       
-      {/* 🔷 LOGO */}
+
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-lg font-bold text-white">
           ₿
         </div>
-        <h1 className="text-xl font-bold">Crypto Tracker</h1>
+        <Link className="hover:text-blue-500" to="/home">Crypto</Link>
       </div>
 
       {/* 🔗 LINKS */}

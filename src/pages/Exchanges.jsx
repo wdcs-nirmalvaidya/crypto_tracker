@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Exchanges() {
   const [exchanges, setExchanges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadData() {
@@ -16,62 +18,66 @@ export default function Exchanges() {
         setLoading(false);
       }
     }
-
     loadData();
   }, []);
 
-  if (loading)
+  if (loading) {
     return (
-      <p className="text-center text-[#0b2545] dark:text-white text-lg mt-10">
+      <p className="text-center text-gray-600 text-lg mt-10">
         Loading...
       </p>
     );
+  }
 
   return (
-    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6
-                    bg-[#eaf3ff] dark:bg-[#0b1320]">
-      {exchanges.map((ex) => (
-        <div
-          key={ex.id}
-          className="
-            bg-white dark:bg-[#0f172a]
-            text-[#0b2545] dark:text-white
-            border border-[#c7ddff] dark:border-[#1c2940]
-            p-6 rounded-xl shadow-lg
-            flex flex-col items-center
-            hover:scale-105 transition
-          "
-        >
-          <img
-            src={ex.image}
-            alt={ex.name}
-            className="w-20 h-20 object-contain mb-4"
-          />
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-          <h2 className="text-xl font-semibold mb-1">
-            {ex.name}
-          </h2>
+        {exchanges.slice(0, 20).map((ex) => (
+          <div
+            key={ex.id}
+            onClick={() => navigate(`/exchange/${ex.id}`)}
+            className="
+              cursor-pointer
+              h-[280px]
+              px-10 py-12
+              rounded-xl
+              flex flex-col items-center justify-center
+              text-center
+              shadow-lg
+              hover:scale-105 transition
 
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Country:{" "}
-            <span className="text-gray-800 dark:text-gray-300">
-              {ex.country || "N/A"}
-            </span>
-          </p>
+              bg-white
+              text-[#0b2545]
+              border border-[#e2e8f0]
 
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Since:{" "}
-            <span className="text-gray-800 dark:text-gray-300">
-              {ex.year_established || "Unknown"}
-            </span>
-          </p>
+              dark:bg-gradient-to-br dark:from-[#0b1320] dark:to-[#111a2b]
+              dark:text-white
+              dark:border-[#1c2940]
+            "
+          >
+            {/* LOGO */}
+            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4">
+              <img
+                src={ex.image}
+                alt={ex.name}
+                className="w-8 h-8 object-contain"
+              />
+            </div>
 
-          <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">
-            Trust Score:{" "}
-            <span className="font-bold">{ex.trust_score}</span>
-          </p>
-        </div>
-      ))}
+            {/* NAME */}
+            <h2 className="text-lg font-semibold">
+              {ex.name}
+            </h2>
+
+            {/* COUNTRY */}
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-2">
+              {ex.country || "Global"}
+            </p>
+          </div>
+        ))}
+
+      </div>
     </div>
   );
 }

@@ -7,12 +7,14 @@ import Watchlist from "./pages/Watchlist";
 import CoinDetails from "./pages/CoinDetails";
 import Profile from "./pages/Profile";
 import Layout from "./components/Layout";
+import ExchangeDetails from "./pages/ExchangeDetails";
+
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
   const signupUser = localStorage.getItem("signupUser");
 
-  // ✅ Allow if logged in OR signed up
+
   if (token || signupUser) {
     return children;
   }
@@ -86,6 +88,17 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+<Route
+  path="/exchange/:id"
+  element={
+    <ProtectedRoute>
+      <Layout>
+        <ExchangeDetails />
+      </Layout>
+    </ProtectedRoute>
+  }
+/>
+
 
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
