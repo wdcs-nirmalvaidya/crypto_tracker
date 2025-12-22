@@ -17,15 +17,16 @@ export default function CoinDetails() {
         setLoading(true);
         setError("");
 
-        // ✅ SAFE CoinGecko endpoint (NO CORS)
+        // Coin info
         const coinRes = await fetch(
           `https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`
         );
         if (!coinRes.ok) throw new Error("Coin API failed");
         const coinData = await coinRes.json();
 
+        // ✅ 24-HOUR PRICE DATA
         const chartRes = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`
+          `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`
         );
         if (!chartRes.ok) throw new Error("Chart API failed");
         const chartData = await chartRes.json();
@@ -103,10 +104,7 @@ export default function CoinDetails() {
                   : "text-red-500"
               }`}
             >
-              {coin.market_data?.price_change_percentage_24h
-                ? coin.market_data.price_change_percentage_24h.toFixed(2)
-                : "0"}
-              %
+              {coin.market_data?.price_change_percentage_24h?.toFixed(2) ?? 0}%
             </p>
           </div>
         </div>
@@ -123,8 +121,13 @@ export default function CoinDetails() {
           </p>
         </div>
 
-        {/* CHART */}
-        <PriceChart prices={prices} />
+        {/* 24-HOUR PRICE CHART */}
+        <div className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            24 Hour Price Chart
+          </h2>
+          <PriceChart prices={prices} />
+        </div>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ export default function Navbar() {
 
   // 🌗 Apply theme globally
   useEffect(() => {
-    const root = document.documentElement; // <html>
+    const root = document.documentElement; // <html> 
 
     if (theme === "dark") {
       root.classList.add("dark");
@@ -48,7 +48,7 @@ export default function Navbar() {
         <Link className="hover:text-blue-500" to="/home">Home</Link>
         <Link className="hover:text-blue-500" to="/exchanges">Exchanges</Link>
         <Link className="hover:text-blue-500" to="/watchlist">Watchlist</Link>
-
+     
         {/* 🌙 THEME TOGGLE */}
         <button
           onClick={toggleTheme}

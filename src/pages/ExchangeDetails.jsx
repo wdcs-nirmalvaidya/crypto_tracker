@@ -35,7 +35,7 @@ export default function ExchangeDetails() {
   if (!exchange) return null;
 
   return (
-    /* ✅ PAGE ALWAYS WHITE */
+    /* ✅ PAGE ALWAYS WHITE (LIGHT + DARK) */
     <div className="min-h-screen bg-white">
       <div className="max-w-5xl mx-auto p-6">
 
@@ -60,59 +60,43 @@ export default function ExchangeDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
           {/* CARD */}
-          <div className="
-            rounded-xl p-6 border
-            bg-blue-50 border-blue-200
-            dark:bg-[#0f172a] dark:border-[#1c2940]
-          ">
-            <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">
+          <div className="bg-white border border-gray-200 dark:bg-[#0f172a] dark:border-[#1c2940] rounded-xl p-6">
+            <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">
               Year Established
             </p>
-            <p className="text-xl font-semibold text-blue-900 dark:text-white">
+            <p className="text-xl font-semibold text-gray-900 dark:text-white">
               {exchange.year_established || "N/A"}
             </p>
           </div>
 
           {/* CARD */}
-          <div className="
-            rounded-xl p-6 border
-            bg-blue-50 border-blue-200
-            dark:bg-[#0f172a] dark:border-[#1c2940]
-          ">
-            <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">
+          <div className="bg-white border border-gray-200 dark:bg-[#0f172a] dark:border-[#1c2940] rounded-xl p-6">
+            <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">
               Trust Score
             </p>
-            <p className="text-xl font-semibold text-blue-900 dark:text-white">
+            <p className="text-xl font-semibold text-gray-900 dark:text-white">
               {exchange.trust_score}
             </p>
           </div>
 
           {/* CARD */}
-          <div className="
-            rounded-xl p-6 border
-            bg-blue-50 border-blue-200
-            dark:bg-[#0f172a] dark:border-[#1c2940]
-          ">
-            <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">
+          <div className="bg-white border border-gray-200 dark:bg-[#0f172a] dark:border-[#1c2940] rounded-xl p-6">
+            <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">
               24h Trade Volume (BTC)
             </p>
-            <p className="text-xl font-semibold text-blue-900 dark:text-white">
+            <p className="text-xl font-semibold text-gray-900 dark:text-white">
               {exchange.trade_volume_24h_btc
                 ? exchange.trade_volume_24h_btc.toFixed(2)
                 : "N/A"}
             </p>
           </div>
-
+          
           {/* CARD */}
-          <div className="
-            rounded-xl p-6 border
-            bg-blue-50 border-blue-200
-            dark:bg-[#0f172a] dark:border-[#1c2940]
-          ">
-            <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">
+          <div className="bg-white border border-gray-200 dark:bg-[#0f172a] dark:border-[#1c2940] rounded-xl p-6">
+            <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">
               Rank
             </p>
-            <p className="text-xl font-semibold text-blue-900 dark:text-white">
+            <p className="text-xl font-semibold text-gray-900 dark:text-white">
               #{exchange.trust_score_rank}
             </p>
           </div>
@@ -132,6 +116,7 @@ export default function ExchangeDetails() {
             </a>
           </div>
         )}
+
       </div>
     </div>
   );

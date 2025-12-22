@@ -13,20 +13,29 @@ export default function PriceChart({ prices }) {
       chartRef.current.destroy();
     }
 
+    const labels = prices.map((p) =>
+      new Date(p[0]).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
+
+    const dataPoints = prices.map((p) => p[1]);
+
     chartRef.current = new Chart(canvasRef.current, {
       type: "line",
       data: {
-        labels: prices.map(p =>
-          new Date(p[0]).toLocaleDateString()
-        ),
+        labels,
         datasets: [
           {
             label: "Price (USD)",
-            data: prices.map(p => p[1]),
+            data: dataPoints,
             borderColor: "#3b82f6",
             backgroundColor: "rgba(59,130,246,0.15)",
             fill: true,
             tension: 0.4,
+            pointRadius: 0,
+            borderWidth: 2,
           },
         ],
       },
@@ -35,10 +44,28 @@ export default function PriceChart({ prices }) {
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) =>
+                `$${ctx.parsed.y.toFixed(2)}`,
+            },
+          },
         },
         scales: {
-          x: { grid: { display: false } },
-          y: { grid: { color: "#1f2937" } },
+          x: {
+            grid: { display: false },
+            ticks: {
+              maxTicksLimit: 6, // cleaner for 24h
+              color: "#9ca3af",
+            },
+          },
+          y: {
+            grid: { color: "#1f2937" },
+            ticks: {
+              color: "#9ca3af",
+              callback: (value) => `$${value}`,
+            },
+          },
         },
       },
     });
