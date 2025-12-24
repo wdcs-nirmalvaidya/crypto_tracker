@@ -119,7 +119,7 @@ export default function CoinDetails() {
 
         {/* CHART */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
+          <h2 className="text-xl font-semibold mb-4 text-black dark:text-black">
             24 Hour Price Chart
           </h2>
           <PriceChart prices={prices} />
