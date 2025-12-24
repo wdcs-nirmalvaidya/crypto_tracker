@@ -20,7 +20,6 @@ export default function ExchangeDetails() {
         setLoading(false);
       }
     }
-
     loadExchange();
   }, [id]);
 
