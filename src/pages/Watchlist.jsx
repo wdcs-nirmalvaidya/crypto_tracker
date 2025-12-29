@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { getWatchlist } from "../services/watchlist";
 import CoinCard from "../components/CoinCard";
+import Pagination from "../components/Pagination";
 import Loader from "../components/Loader";
+
+const ITEMS_PER_PAGE = 12;
 
 export default function Watchlist() {
   const [coins, setCoins] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // ✅ Fetch watchlist
   useEffect(() => {
     async function fetchWatchlist() {
       const ids = getWatchlist();
@@ -23,11 +28,11 @@ export default function Watchlist() {
             ","
           )}`
         );
-
         const data = await res.json();
-        setCoins(data);
+        setCoins(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to load watchlist", err);
+        setCoins([]);
       } finally {
         setLoading(false);
       }
@@ -36,11 +41,27 @@ export default function Watchlist() {
     fetchWatchlist();
   }, []);
 
+  // ✅ Pagination calculations
+  const totalPages = Math.ceil(coins.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedCoins = coins.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  // ✅ FIX: keep page valid when coins change
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  // ⛔ RETURNS MUST COME AFTER ALL HOOKS
   if (loading) return <Loader />;
 
   return (
-    /* FULL WHITE PAGE */
     <div className="w-full min-h-screen bg-white px-8 py-6">
+
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <span className="text-yellow-500 text-3xl">⭐</span>
@@ -58,11 +79,21 @@ export default function Watchlist() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {coins.map((coin) => (
-            <CoinCard key={coin.id} coin={coin} />
-          ))}
-        </div>
+        <>
+          {/* GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {paginatedCoins.map((coin) => (
+              <CoinCard key={coin.id} coin={coin} />
+            ))}
+          </div>
+
+          {/* PAGINATION */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
       )}
     </div>
   );
