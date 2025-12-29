@@ -5,26 +5,47 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Auto-open login box if coming from signup
+
   const [showLogin, setShowLogin] = useState(
     location.state?.fromSignup === true
   );
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   function handleLogin(e) {
     e.preventDefault();
-    if (username && password) {
-      localStorage.setItem("token", "loggedin");
-      navigate("/home");
+    setError("");
+
+
+    const savedUser = JSON.parse(localStorage.getItem("signupUser"));
+
+    if (!savedUser) {
+      setError("No account found. Please sign up first.");
+      return;
     }
+
+    
+    const isValid =
+      (username === savedUser.username ||
+        username === savedUser.email) &&
+      password === savedUser.password;
+
+    if (!isValid) {
+      setError("Invalid username or password");
+      return;
+    }
+
+
+    localStorage.setItem("token", "loggedin");
+    navigate("/home");
   }
 
   return (
     <div className="relative min-h-screen overflow-hidden">
 
-      {/* VIDEO BACKGROUND */}
+
       <video
         autoPlay
         loop
@@ -56,63 +77,41 @@ export default function Login() {
             </p>
           </div>
 
-          {/* CTA PILLS (DEFAULT VIEW) */}
+          {/* CTA PILLS */}
           {!showLogin && (
             <div className="flex items-center justify-center gap-6">
               <Link
                 to="/signup"
-                className="
-                  px-10 py-4 rounded-full
-                  bg-white text-[#0b1320]
-                  font-semibold
-                  hover:bg-gray-200
-                  transition
-                "
+                className="px-10 py-4 rounded-full bg-white text-[#0b1320] font-semibold hover:bg-gray-200 transition"
               >
                 Sign Up Now
               </Link>
 
               <button
                 onClick={() => setShowLogin(true)}
-                className="
-                  px-10 py-4 rounded-full
-                  border border-white/60
-                  text-white font-semibold
-                  hover:bg-white/10
-                  transition
-                "
+                className="px-10 py-4 rounded-full border border-white/60 text-white font-semibold hover:bg-white/10 transition"
               >
                 Login
               </button>
             </div>
           )}
 
-          {/* LOGIN FORM */}
+
           {showLogin && (
-            <div
-              className="
-                mt-10 mx-auto
-                w-[380px]
-                rounded-2xl
-                p-8
-                backdrop-blur-xl
-                bg-white/10
-                border border-white/20
-                shadow-2xl
-                text-white
-              "
-            >
+            <div className="mt-10 mx-auto w-[380px] rounded-2xl p-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl text-white">
+
               <form onSubmit={handleLogin} className="space-y-4">
+                {error && (
+                  <p className="text-red-400 text-sm text-center">
+                    {error}
+                  </p>
+                )}
+
                 <input
-                  placeholder="Username"
+                  placeholder="Username or Email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="
-                    w-full px-4 py-3 rounded-lg
-                    bg-white/10 border border-white/20
-                    text-white outline-none
-                    focus:ring-2 focus:ring-blue-500
-                  "
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
                 <input
@@ -120,23 +119,12 @@ export default function Login() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="
-                    w-full px-4 py-3 rounded-lg
-                    bg-white/10 border border-white/20
-                    text-white outline-none
-                    focus:ring-2 focus:ring-blue-500
-                  "
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
                 <button
                   type="submit"
-                  className="
-                    w-full py-3 rounded-full
-                    border border-white/60
-                    text-white font-semibold
-                    hover:bg-white/10
-                    transition
-                  "
+                  className="w-full py-3 rounded-full border border-white/60 text-white font-semibold hover:bg-white/10 transition"
                 >
                   Sign In
                 </button>
