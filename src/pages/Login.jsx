@@ -1,5 +1,17 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { loginUser, saveToken } from "../services/auth";
+
+async function handleLogin() {
+  try {
+    const data = await loginUser(username, password);
+    saveToken(data.token);
+    navigate("/");
+  } catch (err) {
+    setError(err.message);
+  }
+}
+
 
 export default function Login() {
   const navigate = useNavigate();
