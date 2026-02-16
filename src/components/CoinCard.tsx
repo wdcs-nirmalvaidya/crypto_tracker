@@ -1,39 +1,75 @@
-import { useState, MouseEvent } from "react";
+import { useState, useEffect, MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  addToWatchlist,
-  removeFromWatchlist,
-  isInWatchlist,
-} from "../services/watchlist";
 import { Coin } from "../types/common";
-
-
-/* ---------------- Types ---------------- */
-
 
 interface CoinCardProps {
   coin: Coin;
+  onWatchlistChange?: () => void; // optional refresh for watchlist page
 }
 
-/* ---------------- Component ---------------- */
-
-const CoinCard = ({ coin }: CoinCardProps) => {
+const CoinCard = ({ coin, onWatchlistChange }: CoinCardProps) => {
   const navigate = useNavigate();
+  const [liked, setLiked] = useState(false);
 
-  const [liked, setLiked] = useState<boolean>(
-    isInWatchlist(coin.id)
-  );
+  // ✅ Check if coin is already in watchlist
+  useEffect(() => {
+    checkWatchlist();
+  }, []);
 
-  const toggleWatchlist = (
+  const checkWatchlist = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/watchlist"
+      );
+      const data = await res.json();
+
+      const exists = data.some(
+        (c: Coin) => String(c.id) === String(coin.id)
+      );
+
+      setLiked(exists);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const toggleWatchlist = async (
     e: MouseEvent<HTMLButtonElement>
   ) => {
     e.stopPropagation();
 
-    liked
-      ? removeFromWatchlist(coin.id)
-      : addToWatchlist(coin.id);
+    try {
+      if (liked) {
+        // REMOVE
+        await fetch(
+          `http://localhost:5000/api/watchlist/${coin.id}`,
+          { method: "DELETE" }
+        );
+      } else {
+        // ADD
+        await fetch(
+          "http://localhost:5000/api/watchlist",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              coin_id: coin.id,
+            }),
+          }
+        );
+      }
 
-    setLiked(!liked);
+      setLiked(!liked);
+
+      // Refresh watchlist page instantly
+      if (onWatchlistChange) {
+        onWatchlistChange();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -50,7 +86,7 @@ const CoinCard = ({ coin }: CoinCardProps) => {
         relative
       "
     >
-      {/* ❤️ Watchlist */}
+      {/* ❤️ Single Smart Heart */}
       <button
         onClick={toggleWatchlist}
         className={`absolute top-4 right-4 text-2xl ${
@@ -59,10 +95,9 @@ const CoinCard = ({ coin }: CoinCardProps) => {
             : "text-gray-400 dark:text-gray-300"
         }`}
       >
-        ♥
+        
       </button>
 
-      {/* Coin Image */}
       <img
         src={coin.image}
         alt={coin.name}
@@ -73,7 +108,6 @@ const CoinCard = ({ coin }: CoinCardProps) => {
         "
       />
 
-      {/* Coin Info */}
       <h2 className="text-lg font-semibold text-center">
         {coin.name}
       </h2>

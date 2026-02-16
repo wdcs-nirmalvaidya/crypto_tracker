@@ -15,6 +15,8 @@ import CoinDetails from "../pages/CoinDetails";
 import Profile from "../pages/Profile";
 import ExchangeDetails from "../pages/ExchangeDetails";
 import Layout from "../components/Layout";
+import AddCoin from "../pages/AddCoin";
+import AddExchange from "../pages/AddExchange";
 
 /* ---------------- Protected Route ---------------- */
 
@@ -47,6 +49,7 @@ const AppRouter: React.FC = () => {
         <Route path="/signup" element={<Signup />} />
 
         {/* Protected Routes */}
+
         <Route
           path="/home"
           element={
@@ -112,6 +115,29 @@ const AppRouter: React.FC = () => {
             </ProtectedRoute>
           }
         />
+
+        {/* ✅ ADD COIN ROUTE */}
+        <Route
+          path="/add-coin"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AddCoin />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+  path="/add-exchange"
+  element={
+    <ProtectedRoute>
+      <Layout>
+        <AddExchange />
+      </Layout>
+    </ProtectedRoute>
+  }
+/>
+
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />

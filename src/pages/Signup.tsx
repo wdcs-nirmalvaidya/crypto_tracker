@@ -33,42 +33,48 @@ const Signup = () => {
   };
 
   const handleSignup = (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
-    setError("");
+  e: React.FormEvent<HTMLFormElement>
+) => {
+  e.preventDefault();
+  setError("");
 
-    if (Object.values(form).some((val) => !val)) {
-      setError("All fields are required");
-      return;
-    }
+  if (Object.values(form).some((val) => !val)) {
+    setError("All fields are required");
+    return;
+  }
 
-    if (!form.email.includes("@")) {
-      setError("Enter a valid email address");
-      return;
-    }
+  if (!form.email.includes("@")) {
+    setError("Enter a valid email address");
+    return;
+  }
 
-    if (form.phone.length !== 10) {
-      setError("Phone number must be exactly 10 digits");
-      return;
-    }
+  if (form.phone.length !== 10) {
+    setError("Phone number must be exactly 10 digits");
+    return;
+  }
 
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+  // ✅ NEW CONDITION (Min 6 Characters)
+  if (form.password.length < 6) {
+    setError("Password must be at least 6 characters long");
+    return;
+  }
 
-    localStorage.setItem(
-      "signupUser",
-      JSON.stringify(form)
-    );
+  if (form.password !== form.confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
 
-    alert("Signup successful!");
+  localStorage.setItem(
+    "signupUser",
+    JSON.stringify(form)
+  );
 
-    navigate("/login", {
-      state: { fromSignup: true },
-    });
-  };
+  alert("Signup successful!");
+
+  navigate("/login", {
+    state: { fromSignup: true },
+  });
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#020617] relative overflow-hidden py-10">
@@ -230,5 +236,4 @@ const Signup = () => {
 };
 
 export default Signup;
-
 

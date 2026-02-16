@@ -1,88 +1,177 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CoinCard from "../components/CoinCard";
 import Pagination from "../components/Pagination";
 import { Coin } from "../types/common";
 
-
-
 const ITEMS_PER_PAGE = 12;
 
-/* ---------------- Types ---------------- */
-
-
-/* ---------------- Component ---------------- */
-
 const Home = () => {
+  const navigate = useNavigate();
+
   const [coins, setCoins] = useState<Coin[]>([]);
+  const [watchlistIds, setWatchlistIds] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     fetchCoins();
+    fetchWatchlist();
   }, []);
 
   const fetchCoins = async () => {
     try {
-      setLoading(true);
-      setError("");
-
-      const res = await fetch(
-        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=48&page=1"
-      );
-
-      if (!res.ok) {
-        throw new Error("API limit exceeded");
-      }
-
-      const data: unknown = await res.json();
-
-      if (Array.isArray(data)) {
-        setCoins(data as Coin[]);
-      } else {
-        setCoins([]);
-        setError("API limit reached. Please try again later.");
-      }
+      const res = await fetch("http://localhost:5000/api/coins");
+      const data = await res.json();
+      setCoins(data);
     } catch {
-      setError("Failed to load data. Try again later.");
-      setCoins([]);
+      setError("Failed to load coins");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔢 Pagination logic
+  const fetchWatchlist = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/watchlist");
+      const data = await res.json();
+
+      const ids = data.map((coin: any) => coin.id);
+      setWatchlistIds(ids);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const toggleWatchlist = async (coinId: number) => {
+    try {
+      if (watchlistIds.includes(coinId)) {
+        await fetch(
+          `http://localhost:5000/api/watchlist/${coinId}`,
+          { method: "DELETE" }
+        );
+        setWatchlistIds(
+          watchlistIds.filter((id) => id !== coinId)
+        );
+      } else {
+        await fetch(
+          "http://localhost:5000/api/watchlist",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ coin_id: coinId }),
+          }
+        );
+        setWatchlistIds([...watchlistIds, coinId]);
+      }
+    } catch (err) {
+      console.error("Watchlist error:", err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    await fetch(`http://localhost:5000/api/coins/${id}`, {
+      method: "DELETE",
+    });
+    fetchCoins();
+  };
+
+  const handleEdit = (coin: Coin) => {
+    navigate("/add-coin", { state: { coin } });
+  };
+
   const totalPages = Math.ceil(coins.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-
   const paginatedCoins = coins.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE
   );
 
-  if (loading) return <p className="p-6">Loading...</p>;
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
+  if (loading)
+    return <div className="p-10 text-center">Loading...</div>;
+
+  if (error)
+    return <div className="p-10 text-red-500">{error}</div>;
 
   return (
-    <div className="w-full px-8 py-6 bg-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-6 text-[#0b1320]">
-        Market Overview
-      </h1>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {paginatedCoins.map((coin) => (
-          <CoinCard key={coin.id} coin={coin} />
-        ))}
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-3xl font-bold text-blue-900">
+            Market Overview
+          </h1>
+
+          <button
+            onClick={() => navigate("/add-coin")}
+            className="bg-blue-700 text-white px-5 py-2 rounded-lg"
+          >
+            + Add Coin
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {paginatedCoins.map((coin) => (
+            <div key={coin.id} className="relative group">
+
+              <div className="bg-blue-600 text-white rounded-2xl shadow-lg relative">
+                <CoinCard coin={coin} />
+
+                {/* ❤️ Heart Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleWatchlist(Number(coin.id));
+                  }}
+                  className="absolute top-2 right-2 text-xl"
+                >
+                  {watchlistIds.includes(Number(coin.id))
+                    ? "❤️"
+                    : "🤍"}
+                </button>
+
+                <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100">
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(coin);
+                    }}
+                    className="bg-white text-yellow-600 text-xs px-2 rounded"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(Number(coin.id));
+                    }}
+                    className="bg-white text-red-600 text-xs px-2 rounded"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+
       </div>
-
-      {/* PAGINATION */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
     </div>
   );
-};  
+};
 
 export default Home;
