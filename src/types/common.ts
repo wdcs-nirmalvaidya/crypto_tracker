@@ -52,6 +52,9 @@ export interface User {
 // ================= EXCHANGES LIST =================
 
 export interface Exchange {
+  year_established: string;
+  trust_score: string;
+  trade_volume_24h_btc: string;
   id: string;
   name: string;
   image: string;

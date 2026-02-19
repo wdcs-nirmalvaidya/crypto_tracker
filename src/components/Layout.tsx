@@ -1,4 +1,5 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 
 interface LayoutProps {
@@ -6,11 +7,132 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(false);
+ const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
+  // 🔥 Start token expiry timer
+  const startExpiryTimer = (token: string) => {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const expirationTime = payload.exp * 1000;
+      const currentTime = Date.now();
+      const timeLeft = expirationTime - currentTime;
+
+      // Clear previous timer
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+
+      if (timeLeft <= 0) {
+        setShowPopup(true);
+      } else {
+        timerRef.current = setTimeout(() => {
+          setShowPopup(true);
+        }, timeLeft);
+      }
+    } catch (err) {
+      console.error("Invalid token");
+    }
+  };
+
+  // 🔁 On mount check token
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      startExpiryTimer(token);
+    }
+  }, []);
+
+  // 🔄 Stay Here → Refresh token
+  const handleStay = async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/auth/refresh",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Refresh failed");
+      }
+
+      const data = await res.json();
+
+      // Save new access token
+      localStorage.setItem("accessToken", data.accessToken);
+
+      setShowPopup(false);
+
+      // Restart timer
+      startExpiryTimer(data.accessToken);
+
+    } catch (err) {
+      handleLogout();
+    }
+  };
+
+  // ❌ Logout
+  const handleLogout = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    navigate("/login");
+  };
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0b1320] text-[#0b1320] dark:text-white transition-colors duration-300">
-      <Navbar />
-      <main className="w-full">{children}</main>
-    </div>
+    <>
+      <div className="min-h-screen bg-white dark:bg-[#0b1320] text-[#0b1320] dark:text-white transition-colors duration-300">
+        <Navbar />
+        <main className="w-full">{children}</main>
+      </div>
+
+      {/* 🔔 SESSION EXPIRED POPUP */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-[#111A2B] p-8 rounded-2xl shadow-xl text-center w-[380px] animate-fadeIn">
+
+            <h2 className="text-xl font-semibold mb-4 text-white">
+              Session Expired
+            </h2>
+
+            <p className="text-sm mb-6 text-gray-600 dark:text-gray-300">
+              Your session has expired. Do you want to stay here or logout?
+            </p>
+
+            <div className="flex justify-center gap-4">
+
+              {/* 🟦 Stay Here */}
+              <button
+                onClick={handleStay}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition duration-200 shadow"
+              >
+                Stay Here
+              </button>
+
+              {/* 🟥 Logout */}
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg transition duration-200 shadow"
+              >
+                Logout
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

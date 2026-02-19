@@ -25,10 +25,9 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const token = localStorage.getItem("token");
-  const signupUser = localStorage.getItem("signupUser");
+  const accessToken = localStorage.getItem("accessToken");
 
-  if (token || signupUser) {
+  if (accessToken) {
     return <>{children}</>;
   }
 
@@ -41,6 +40,7 @@ const AppRouter: React.FC = () => {
   return (
     <Router>
       <Routes>
+
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -116,7 +116,6 @@ const AppRouter: React.FC = () => {
           }
         />
 
-        {/* ✅ ADD COIN ROUTE */}
         <Route
           path="/add-coin"
           element={
@@ -127,20 +126,21 @@ const AppRouter: React.FC = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-  path="/add-exchange"
-  element={
-    <ProtectedRoute>
-      <Layout>
-        <AddExchange />
-      </Layout>
-    </ProtectedRoute>
-  }
-/>
 
+        <Route
+          path="/add-exchange"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AddExchange />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
+
       </Routes>
     </Router>
   );

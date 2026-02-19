@@ -13,6 +13,11 @@ const AddCoin = () => {
     image: editingCoin?.image || "",
   });
 
+  const [errors, setErrors] = useState({
+    name: "",
+    current_price: "",
+  });
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCoin({
       ...coin,
@@ -20,8 +25,49 @@ const AddCoin = () => {
     });
   };
 
+  const validate = () => {
+    let isValid = true;
+    const newErrors = { name: "", current_price: "" };
+
+    // ✅ Name validation
+    const nameRegex = /^[A-Za-z]+$/;
+
+    if (!coin.name) {
+      newErrors.name = "Coin name is required";
+      isValid = false;
+    } else if (!nameRegex.test(coin.name)) {
+      newErrors.name = "Only letters allowed";
+      isValid = false;
+    } else if (coin.name.length > 10) {
+      newErrors.name = "Maximum 10 letters allowed";
+      isValid = false;
+    }
+
+    // ✅ Price validation
+    const priceValue = Number(coin.current_price);
+
+    if (!coin.current_price) {
+      newErrors.current_price = "Price is required";
+      isValid = false;
+    } else if (isNaN(priceValue)) {
+      newErrors.current_price = "Price must be a number";
+      isValid = false;
+    } else if (priceValue <= 0) {
+      newErrors.current_price = "Price must be greater than 0";
+      isValid = false;
+    } else if (coin.current_price.toString().length > 10) {
+      newErrors.current_price = "Maximum 10 digits allowed";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validate()) return;
 
     try {
       const url = editingCoin
@@ -72,43 +118,55 @@ const AddCoin = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           
-          <input
-            type="text"
-            name="name"
-            placeholder="Coin Name"
-            value={coin.name}
-            onChange={handleChange}
-            required
-            className="
-              w-full
-              border border-gray-300
-              rounded-lg
-              px-4 py-2
-              bg-white text-[#0b1320]
-              focus:outline-none focus:ring-2 focus:ring-blue-500
-              dark:bg-[#111a2b] dark:border-[#1c2940] dark:text-white
-              transition duration-200
-            "
-          />
+          <div>
+            <input
+              type="text"
+              name="name"
+              placeholder="Coin Name"
+              value={coin.name}
+              onChange={handleChange}
+              required
+              className="
+                w-full
+                border border-gray-300
+                rounded-lg
+                px-4 py-2
+                bg-white text-[#0b1320]
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+                dark:bg-[#111a2b] dark:border-[#1c2940] dark:text-white
+                transition duration-200
+              "
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
+          </div>
 
-          <input
-            type="number"
-            name="current_price"
-            placeholder="Price"
-            value={coin.current_price}
-            onChange={handleChange}
-            required
-            className="
-              w-full
-              border border-gray-300
-              rounded-lg
-              px-4 py-2
-              bg-white text-[#0b1320]
-              focus:outline-none focus:ring-2 focus:ring-blue-500
-              dark:bg-[#111a2b] dark:border-[#1c2940] dark:text-white
-              transition duration-200
-            "
-          />
+          <div>
+            <input
+              type="number"
+              name="current_price"
+              placeholder="Price"
+              value={coin.current_price}
+              onChange={handleChange}
+              required
+              className="
+                w-full
+                border border-gray-300
+                rounded-lg
+                px-4 py-2
+                bg-white text-[#0b1320]
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+                dark:bg-[#111a2b] dark:border-[#1c2940] dark:text-white
+                transition duration-200
+              "
+            />
+            {errors.current_price && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.current_price}
+              </p>
+            )}
+          </div>
 
           <input
             type="text"

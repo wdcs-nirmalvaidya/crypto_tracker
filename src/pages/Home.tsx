@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import CoinCard from "../components/CoinCard";
 import Pagination from "../components/Pagination";
 import { Coin } from "../types/common";
@@ -8,6 +8,7 @@ const ITEMS_PER_PAGE = 12;
 
 const Home = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [coins, setCoins] = useState<Coin[]>([]);
   const [watchlistIds, setWatchlistIds] = useState<number[]>([]);
@@ -15,14 +16,27 @@ const Home = () => {
   const [error, setError] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  // 🔎 Get search from URL
+  const params = new URLSearchParams(location.search);
+  const search = params.get("search") || "";
+
   useEffect(() => {
     fetchCoins();
     fetchWatchlist();
-  }, []);
+  }, [location.search]); // 🔥 refetch when search changes
 
   const fetchCoins = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/coins");
+      setLoading(true);
+
+      const res = await fetch(
+        `http://localhost:5000/api/coins?search=${search}`
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to load coins");
+      }
+
       const data = await res.json();
       setCoins(data);
     } catch {
@@ -83,8 +97,14 @@ const Home = () => {
     navigate("/add-coin", { state: { coin } });
   };
 
-  const totalPages = Math.ceil(coins.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  // 🔥 Pagination (no frontend filtering anymore)
+  const totalPages = Math.ceil(
+    coins.length / ITEMS_PER_PAGE
+  );
+
+  const startIndex =
+    (currentPage - 1) * ITEMS_PER_PAGE;
+
   const paginatedCoins = coins.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE
@@ -113,61 +133,68 @@ const Home = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {paginatedCoins.map((coin) => (
-            <div key={coin.id} className="relative group">
+        {coins.length === 0 ? (
+          <p className="text-gray-600">
+            No matching coins found
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {paginatedCoins.map((coin) => (
+                <div key={coin.id} className="relative group">
 
-              <div className="bg-blue-600 text-white rounded-2xl shadow-lg relative">
-                <CoinCard coin={coin} />
+                  <div className="bg-blue-600 text-white rounded-2xl shadow-lg relative">
+                    <CoinCard coin={coin} />
 
-                {/* ❤️ Heart Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleWatchlist(Number(coin.id));
-                  }}
-                  className="absolute top-2 right-2 text-xl"
-                >
-                  {watchlistIds.includes(Number(coin.id))
-                    ? "❤️"
-                    : "🤍"}
-                </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWatchlist(Number(coin.id));
+                      }}
+                      className="absolute top-2 right-2 text-xl"
+                    >
+                      {watchlistIds.includes(Number(coin.id))
+                        ? "❤️"
+                        : "🤍"}
+                    </button>
 
-                <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100">
+                    <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100">
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEdit(coin);
-                    }}
-                    className="bg-white text-yellow-600 text-xs px-2 rounded"
-                  >
-                    Edit
-                  </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(coin);
+                        }}
+                        className="bg-white text-yellow-600 text-xs px-2 rounded"
+                      >
+                        Edit
+                      </button>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(Number(coin.id));
-                    }}
-                    className="bg-white text-red-600 text-xs px-2 rounded"
-                  >
-                    Delete
-                  </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(Number(coin.id));
+                        }}
+                        className="bg-white text-red-600 text-xs px-2 rounded"
+                      >
+                        Delete
+                      </button>
 
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div className="mt-12 flex justify-center">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </div>
+            <div className="mt-12 flex justify-center">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
+        )}
 
       </div>
     </div>

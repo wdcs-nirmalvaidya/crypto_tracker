@@ -1,8 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { SignupUser } from "../types/auth";
-
-
 
 interface LocationState {
   fromSignup?: boolean;
@@ -11,52 +8,72 @@ interface LocationState {
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const state = location.state as LocationState | null;
 
-  // 🔥 FIX: Buttons visible by default
-  const [showLogin, setShowLogin] = useState<boolean>(
-    false // change here
-  );
-
-  // OPTIONAL: auto open after signup
-  // useEffect(() => {
-  //   if (state?.fromSignup) {
-  //     setShowLogin(true);
-  //   }
-  // }, [state]);
-
+  const [showLogin, setShowLogin] = useState<boolean>(false);
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleLogin = (
+  // Auto open login after signup
+  useEffect(() => {
+    if (state?.fromSignup) {
+      setShowLogin(true);
+    }
+  }, [state]);
+
+  const handleLogin = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
     setError("");
 
-    const rawUser = localStorage.getItem("signupUser");
-
-    if (!rawUser) {
-      setError("No account found. Please sign up first.");
+    if (!username || !password) {
+      setError("All fields are required");
       return;
     }
 
-    const savedUser: SignupUser = JSON.parse(rawUser);
+    try {
+      setLoading(true);
 
-    const isValid =
-      (username === savedUser.username ||
-        username === savedUser.email) &&
-      password === savedUser.password;
+      const response = await fetch(
+        "http://localhost:5000/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            usernameOrEmail: username,
+            password: password,
+          }),
+        }
+      );
 
-    if (!isValid) {
-      setError("Invalid username or password");
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // ✅ Store BOTH tokens
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+
+      // Store user
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data.user)
+      );
+
+      navigate("/home");
+
+    } catch (err: any) {
+      setError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
-
-    localStorage.setItem("token", "loggedin");
-    navigate("/home");
   };
 
   return (
@@ -66,7 +83,6 @@ const Login = () => {
         loop
         muted
         playsInline
-        preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
       >
         <source src="/videos/trading.mp4" type="video/mp4" />
@@ -90,7 +106,6 @@ const Login = () => {
             </p>
           </div>
 
-          {/* CTA BUTTONS */}
           {!showLogin && (
             <div className="flex items-center justify-center gap-6">
               <Link
@@ -109,7 +124,6 @@ const Login = () => {
             </div>
           )}
 
-          {/* LOGIN FORM */}
           {showLogin && (
             <div className="mt-10 mx-auto w-[380px] rounded-2xl p-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl text-white">
               <form
@@ -142,14 +156,14 @@ const Login = () => {
                 />
 
                 <button
+                  disabled={loading}
                   type="submit"
-                  className="w-full py-3 rounded-full border border-white/60 text-white font-semibold hover:bg-white/10 transition"
+                  className="w-full py-3 rounded-full border border-white/60 text-white font-semibold hover:bg-white/10 transition disabled:opacity-50"
                 >
-                  Sign In
+                  {loading ? "Signing In..." : "Sign In"}
                 </button>
               </form>
 
-              {/* BACK */}
               <button
                 onClick={() => setShowLogin(false)}
                 className="mt-4 text-sm text-gray-300 hover:underline"
@@ -158,6 +172,7 @@ const Login = () => {
               </button>
             </div>
           )}
+
         </div>
       </div>
     </div>

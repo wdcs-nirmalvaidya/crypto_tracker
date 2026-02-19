@@ -1,82 +1,13 @@
-import { useState, useEffect, MouseEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import { Coin } from "../types/common";
 
 interface CoinCardProps {
   coin: Coin;
-  onWatchlistChange?: () => void; // optional refresh for watchlist page
 }
 
-const CoinCard = ({ coin, onWatchlistChange }: CoinCardProps) => {
-  const navigate = useNavigate();
-  const [liked, setLiked] = useState(false);
-
-  // ✅ Check if coin is already in watchlist
-  useEffect(() => {
-    checkWatchlist();
-  }, []);
-
-  const checkWatchlist = async () => {
-    try {
-      const res = await fetch(
-        "http://localhost:5000/api/watchlist"
-      );
-      const data = await res.json();
-
-      const exists = data.some(
-        (c: Coin) => String(c.id) === String(coin.id)
-      );
-
-      setLiked(exists);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const toggleWatchlist = async (
-    e: MouseEvent<HTMLButtonElement>
-  ) => {
-    e.stopPropagation();
-
-    try {
-      if (liked) {
-        // REMOVE
-        await fetch(
-          `http://localhost:5000/api/watchlist/${coin.id}`,
-          { method: "DELETE" }
-        );
-      } else {
-        // ADD
-        await fetch(
-          "http://localhost:5000/api/watchlist",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              coin_id: coin.id,
-            }),
-          }
-        );
-      }
-
-      setLiked(!liked);
-
-      // Refresh watchlist page instantly
-      if (onWatchlistChange) {
-        onWatchlistChange();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
+const CoinCard = ({ coin }: CoinCardProps) => {
   return (
     <div
-      onClick={() => navigate(`/coin/${coin.id}`)}
       className="
-        cursor-pointer
         bg-white dark:bg-[#111a2b]
         text-[#0b2545] dark:text-white
         border border-[#c7ddff] dark:border-[#1c2940]
@@ -86,18 +17,7 @@ const CoinCard = ({ coin, onWatchlistChange }: CoinCardProps) => {
         relative
       "
     >
-      {/* ❤️ Single Smart Heart */}
-      <button
-        onClick={toggleWatchlist}
-        className={`absolute top-4 right-4 text-2xl ${
-          liked
-            ? "text-red-500"
-            : "text-gray-400 dark:text-gray-300"
-        }`}
-      >
-        
-      </button>
-
+      {/* Coin Image */}
       <img
         src={coin.image}
         alt={coin.name}
@@ -108,6 +28,7 @@ const CoinCard = ({ coin, onWatchlistChange }: CoinCardProps) => {
         "
       />
 
+      {/* Coin Info */}
       <h2 className="text-lg font-semibold text-center">
         {coin.name}
       </h2>

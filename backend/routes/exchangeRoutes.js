@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controllers/exchangeController");
+const exchangeController = require("../controllers/exchangeController");
 
-router.get("/", controller.getExchanges);
-router.post("/", controller.createExchange);
-router.put("/:id", controller.updateExchange);
-router.delete("/:id", controller.deleteExchange);
+router.get("/", exchangeController.getExchanges);
+router.get("/:id", exchangeController.getExchangeById); // 👈 THIS WAS MISSING
+router.post("/", exchangeController.createExchange);
+router.put("/:id", exchangeController.updateExchange);
+router.delete("/:id", exchangeController.deleteExchange);
 
 module.exports = router;
