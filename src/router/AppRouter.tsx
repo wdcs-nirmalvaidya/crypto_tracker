@@ -24,12 +24,30 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const accessToken = localStorage.getItem("accessToken");
+const isTokenValid = () => {
+  const token = localStorage.getItem("accessToken");
 
-  if (accessToken) {
+  if (!token) return false;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const expiration = payload.exp * 1000;
+
+    return Date.now() < expiration;
+  } catch {
+    return false;
+  }
+};
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  if (isTokenValid()) {
     return <>{children}</>;
   }
+
+  // Clear storage if invalid
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
 
   return <Navigate to="/login" replace />;
 };

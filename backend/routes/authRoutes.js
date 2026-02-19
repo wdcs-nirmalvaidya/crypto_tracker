@@ -6,24 +6,10 @@ const jwt = require("jsonwebtoken");
 
 /* ================= SIGNUP ================= */
 router.post("/signup", async (req, res) => {
-  const {
-    firstName,
-    lastName,
-    username,
-    email,
-    phone,
-    password,
-  } = req.body;
+  const { firstName, lastName, username, email, phone, password } = req.body;
 
   try {
-    if (
-      !firstName ||
-      !lastName ||
-      !username ||
-      !email ||
-      !phone ||
-      !password
-    ) {
+    if (!firstName || !lastName || !username || !email || !phone || !password) {
       return res.status(400).json({
         message: "All fields are required",
       });
@@ -47,14 +33,7 @@ router.post("/signup", async (req, res) => {
       (first_name, last_name, username, email, phone, password)
       VALUES ($1,$2,$3,$4,$5,$6)
       RETURNING id, username, email`,
-      [
-        firstName,
-        lastName,
-        username,
-        email,
-        phone,
-        hashedPassword,
-      ]
+      [firstName, lastName, username, email, phone, hashedPassword]
     );
 
     res.json({
@@ -94,10 +73,7 @@ router.post("/login", async (req, res) => {
 
     const user = userResult.rows[0];
 
-    const validPassword = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
       return res.status(400).json({
@@ -105,16 +81,22 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 🔥 ACCESS TOKEN (2 minutes for testing)
+    // 🔥 ACCESS TOKEN (force uniqueness)
     const accessToken = jwt.sign(
-      { id: user.id },
+      {
+        id: user.id,
+        tokenVersion: Date.now() // 🔥 makes token always unique
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "2m" }
+      { expiresIn: "2m" } // testing
     );
 
-    // 🔥 REFRESH TOKEN (1 day)
+    // 🔥 REFRESH TOKEN
     const refreshToken = jwt.sign(
-      { id: user.id },
+      {
+        id: user.id,
+        tokenVersion: Date.now()
+      },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "1d" }
     );
@@ -147,7 +129,7 @@ router.post("/refresh", async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-    return res.status(401).json({ message: "No refresh token" });
+    return res.status(401).json({ message: "No refresh token provided" });
   }
 
   try {
@@ -167,11 +149,15 @@ router.post("/refresh", async (req, res) => {
       });
     }
 
-    const newAccessToken = jwt.sign(
-      { id: decoded.id },
-      process.env.JWT_SECRET,
-      { expiresIn: "2m" } // testing
-    );
+    // 🔥 NEW ACCESS TOKEN (always unique)
+   const newAccessToken = jwt.sign(
+  { 
+    id: decoded.id,
+    refreshedAt: Date.now()   // 🔥 add this
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: "1h" }
+);
 
     res.json({ accessToken: newAccessToken });
 
@@ -180,6 +166,29 @@ router.post("/refresh", async (req, res) => {
     return res.status(403).json({
       message: "Refresh token expired",
     });
+  }
+});
+
+
+/* ================= LOGOUT ================= */
+router.post("/logout", async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ message: "No refresh token" });
+  }
+
+  try {
+    await pool.query(
+      "UPDATE users SET refresh_token = NULL WHERE refresh_token = $1",
+      [refreshToken]
+    );
+
+    res.json({ message: "Logged out successfully" });
+
+  } catch (err) {
+    console.error("LOGOUT ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

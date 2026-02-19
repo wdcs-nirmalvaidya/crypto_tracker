@@ -16,16 +16,14 @@ const Login = () => {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Auto open login after signup
+  // ✅ Auto open login after signup
   useEffect(() => {
     if (state?.fromSignup) {
       setShowLogin(true);
     }
   }, [state]);
 
-  const handleLogin = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -57,17 +55,18 @@ const Login = () => {
         throw new Error(data.message || "Login failed");
       }
 
-      // ✅ Store BOTH tokens
+      // 🔥 IMPORTANT: Clear old tokens first
+      localStorage.clear();
+
+      // ✅ Store NEW tokens
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
 
-      // Store user
-      localStorage.setItem(
-        "user",
-        JSON.stringify(data.user)
-      );
+      // ✅ Store user
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      navigate("/home");
+      // ✅ Navigate AFTER storage
+      navigate("/home", { replace: true });
 
     } catch (err: any) {
       setError(err.message || "Login failed");
@@ -126,10 +125,7 @@ const Login = () => {
 
           {showLogin && (
             <div className="mt-10 mx-auto w-[380px] rounded-2xl p-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl text-white">
-              <form
-                onSubmit={handleLogin}
-                className="space-y-4"
-              >
+              <form onSubmit={handleLogin} className="space-y-4">
                 {error && (
                   <p className="text-red-400 text-sm text-center">
                     {error}
@@ -139,9 +135,7 @@ const Login = () => {
                 <input
                   placeholder="Username or Email"
                   value={username}
-                  onChange={(e) =>
-                    setUsername(e.target.value)
-                  }
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
@@ -149,9 +143,7 @@ const Login = () => {
                   type="password"
                   placeholder="Password"
                   value={password}
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
