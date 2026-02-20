@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import PriceChart from "../components/PriceChart";
+
 import Loader from "../components/Loader";
 import { CoinDetailsData, PricePoint } from "../types/common";
 
@@ -175,7 +175,7 @@ const CoinDetails = () => {
             24 Hour Price Chart
           </h2>
 
-          <PriceChart prices={prices} />
+    
         </div>
       </div>
     </div>
