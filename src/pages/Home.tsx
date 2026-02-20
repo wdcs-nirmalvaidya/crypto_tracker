@@ -20,15 +20,9 @@ const Home = () => {
   const params = new URLSearchParams(location.search);
   const search = params.get("search") || "";
 
-  useEffect(() => {
-    fetchCoins();
-    fetchWatchlist();
-  }, [location.search]); // 🔥 refetch when search changes
-
+  // 🔥 Fetch coins
   const fetchCoins = async () => {
     try {
-      setLoading(true);
-
       const res = await fetch(
         `http://localhost:5000/api/coins?search=${search}`
       );
@@ -41,11 +35,10 @@ const Home = () => {
       setCoins(data);
     } catch {
       setError("Failed to load coins");
-    } finally {
-      setLoading(false);
     }
   };
 
+  // 🔥 Fetch watchlist
   const fetchWatchlist = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/watchlist");
@@ -57,6 +50,21 @@ const Home = () => {
       console.error(err);
     }
   };
+
+  // 🔥 INITIAL LOAD + AUTO REFRESH EVERY 30s
+  useEffect(() => {
+    setCurrentPage(1);
+    setLoading(true);
+
+    fetchCoins().finally(() => setLoading(false));
+    fetchWatchlist();
+
+    const interval = setInterval(() => {
+      fetchCoins();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [location.search]);
 
   const toggleWatchlist = async (coinId: number) => {
     try {
@@ -97,7 +105,6 @@ const Home = () => {
     navigate("/add-coin", { state: { coin } });
   };
 
-  // 🔥 Pagination (no frontend filtering anymore)
   const totalPages = Math.ceil(
     coins.length / ITEMS_PER_PAGE
   );
@@ -182,6 +189,7 @@ const Home = () => {
 
                     </div>
                   </div>
+
                 </div>
               ))}
             </div>
