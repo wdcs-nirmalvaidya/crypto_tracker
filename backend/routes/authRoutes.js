@@ -156,7 +156,7 @@ router.post("/refresh", async (req, res) => {
     refreshedAt: Date.now()   // 🔥 add this
   },
   process.env.JWT_SECRET,
-  { expiresIn: "1h" }
+  { expiresIn: "5h" }
 );
 
     res.json({ accessToken: newAccessToken });

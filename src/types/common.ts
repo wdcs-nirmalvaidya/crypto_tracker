@@ -1,4 +1,5 @@
-// COIN TYPES
+// ================= COIN LIST =================
+
 export interface Coin {
   id: string;
   name: string;
@@ -6,29 +7,22 @@ export interface Coin {
   current_price: number;
 }
 
+// ================= COIN DETAILS =================
+
 export interface CoinDetailsData {
   id: string;
   name: string;
-  symbol: string;
-  image?: {
-    large?: string;
-  };
-  description?: {
-    en?: string;
-  };
-  market_data?: {
-    current_price?: {
-      usd?: number;
-    };
-    market_cap?: {
-      usd?: number;
-    };
-    price_change_percentage_24h?: number;
-  };
+  image: string;
+  current_price: number;
+  change_24h?: number;
 }
 
-// CHART
-export type PricePoint = [number, number];
+// ================= CHART =================
+
+export interface PricePoint {
+  timestamp: number;
+  price: number;
+}
 
 // PAGINATION
 export interface PaginationProps {

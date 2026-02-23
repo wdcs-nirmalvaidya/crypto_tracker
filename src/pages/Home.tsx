@@ -16,11 +16,9 @@ const Home = () => {
   const [error, setError] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // 🔎 Get search from URL
   const params = new URLSearchParams(location.search);
   const search = params.get("search") || "";
 
-  // 🔥 Fetch coins
   const fetchCoins = async () => {
     try {
       const res = await fetch(
@@ -38,12 +36,10 @@ const Home = () => {
     }
   };
 
-  // 🔥 Fetch watchlist
   const fetchWatchlist = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/watchlist");
       const data = await res.json();
-
       const ids = data.map((coin: any) => coin.id);
       setWatchlistIds(ids);
     } catch (err) {
@@ -51,7 +47,6 @@ const Home = () => {
     }
   };
 
-  // 🔥 INITIAL LOAD + AUTO REFRESH EVERY 30s
   useEffect(() => {
     setCurrentPage(1);
     setLoading(true);
@@ -61,7 +56,7 @@ const Home = () => {
 
     const interval = setInterval(() => {
       fetchCoins();
-    }, 30000); // 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [location.search]);
@@ -103,6 +98,10 @@ const Home = () => {
 
   const handleEdit = (coin: Coin) => {
     navigate("/add-coin", { state: { coin } });
+  };
+
+  const handleOpenDetails = (coinId: number) => {
+    navigate(`/coin/${coinId}`);
   };
 
   const totalPages = Math.ceil(
@@ -150,7 +149,10 @@ const Home = () => {
               {paginatedCoins.map((coin) => (
                 <div key={coin.id} className="relative group">
 
-                  <div className="bg-blue-600 text-white rounded-2xl shadow-lg relative">
+                  <div
+                    onClick={() => handleOpenDetails(Number(coin.id))}
+                    className="bg-blue-600 text-white rounded-2xl shadow-lg relative cursor-pointer hover:scale-105 transition duration-300"
+                  >
                     <CoinCard coin={coin} />
 
                     <button

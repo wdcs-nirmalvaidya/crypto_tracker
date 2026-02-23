@@ -1,22 +1,13 @@
 import { useState } from "react";
 import { User } from "../types/common";
 
-
-
-
-
-/* ---------------- Types ---------------- */
-
-
-/* ---------------- Helpers ---------------- */
+/* ---------------- Helper ---------------- */
 
 const getStoredUser = (): User | null => {
-  const signupUser = localStorage.getItem("signupUser");
-  const localUser = localStorage.getItem("localUser");
+  const stored = localStorage.getItem("user");
 
   try {
-    if (signupUser) return JSON.parse(signupUser);
-    if (localUser) return JSON.parse(localUser);
+    if (stored) return JSON.parse(stored);
     return null;
   } catch {
     return null;
@@ -28,11 +19,8 @@ const getStoredUser = (): User | null => {
 const Profile = () => {
   const storedUser = getStoredUser();
 
-  const [user, setUser] = useState<User | null>(
-    storedUser
-  );
-  const [editMode, setEditMode] =
-    useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(storedUser);
+  const [editMode, setEditMode] = useState<boolean>(false);
 
   const [form, setForm] = useState({
     firstName: storedUser?.firstName || "",
@@ -67,8 +55,9 @@ const Profile = () => {
       username: form.username,
     };
 
+    // ✅ Save back to correct key
     localStorage.setItem(
-      "signupUser",
+      "user",
       JSON.stringify(updatedUser)
     );
 
@@ -79,21 +68,17 @@ const Profile = () => {
   return (
     <div className="w-full min-h-screen bg-white flex justify-center items-start pt-12">
       <div
-        className="
-          w-full max-w-3xl p-10 rounded-2xl shadow-xl
-          bg-white text-[#0b2545] border border-[#e2e8f0]
-          dark:bg-gradient-to-br dark:from-[#0b1320] dark:to-[#111a2b]
-          dark:text-white dark:border-[#1c2940]
-        "
+        className="w-full max-w-3xl p-10 rounded-2xl shadow-xl text-white"
+        style={{ backgroundColor: "#111A2B" }}
       >
         <h1 className="text-3xl font-bold mb-8 text-center">
           My Profile
         </h1>
 
-        <div className="space-y-6 text-xl">
+        <div className="space-y-6 text-lg">
           {/* First Name */}
-          <div className="flex justify-between border-b border-gray-200 dark:border-white/10 pb-4">
-            <span className="text-gray-500 dark:text-gray-300">
+          <div className="flex justify-between border-b border-white/10 pb-4">
+            <span className="text-gray-400">
               First Name
             </span>
             {editMode ? (
@@ -101,18 +86,16 @@ const Profile = () => {
                 name="firstName"
                 value={form.firstName}
                 onChange={handleChange}
-                className="text-right bg-transparent border-b outline-none font-semibold w-1/2"
+                className="text-right bg-transparent border-b border-white/20 outline-none w-1/2"
               />
             ) : (
-              <span className="font-semibold">
-                {user.firstName}
-              </span>
+              <span>{user.firstName}</span>
             )}
           </div>
 
           {/* Last Name */}
-          <div className="flex justify-between border-b border-gray-200 dark:border-white/10 pb-4">
-            <span className="text-gray-500 dark:text-gray-300">
+          <div className="flex justify-between border-b border-white/10 pb-4">
+            <span className="text-gray-400">
               Last Name
             </span>
             {editMode ? (
@@ -120,18 +103,16 @@ const Profile = () => {
                 name="lastName"
                 value={form.lastName}
                 onChange={handleChange}
-                className="text-right bg-transparent border-b outline-none font-semibold w-1/2"
+                className="text-right bg-transparent border-b border-white/20 outline-none w-1/2"
               />
             ) : (
-              <span className="font-semibold">
-                {user.lastName}
-              </span>
+              <span>{user.lastName}</span>
             )}
           </div>
 
           {/* Username */}
-          <div className="flex justify-between border-b border-gray-200 dark:border-white/10 pb-4">
-            <span className="text-gray-500 dark:text-gray-300">
+          <div className="flex justify-between border-b border-white/10 pb-4">
+            <span className="text-gray-400">
               Username
             </span>
             {editMode ? (
@@ -139,33 +120,27 @@ const Profile = () => {
                 name="username"
                 value={form.username}
                 onChange={handleChange}
-                className="text-right bg-transparent border-b outline-none font-semibold w-1/2"
+                className="text-right bg-transparent border-b border-white/20 outline-none w-1/2"
               />
             ) : (
-              <span className="font-semibold">
-                {user.username}
-              </span>
+              <span>{user.username}</span>
             )}
           </div>
 
           {/* Email */}
-          <div className="flex justify-between border-b border-gray-200 dark:border-white/10 pb-4">
-            <span className="text-gray-500 dark:text-gray-300">
+          <div className="flex justify-between border-b border-white/10 pb-4">
+            <span className="text-gray-400">
               Email
             </span>
-            <span className="font-semibold break-all text-right">
-              {user.email}
-            </span>
+            <span>{user.email}</span>
           </div>
 
           {/* Phone */}
           <div className="flex justify-between">
-            <span className="text-gray-500 dark:text-gray-300">
+            <span className="text-gray-400">
               Phone
             </span>
-            <span className="font-semibold">
-              {user.phone}
-            </span>
+            <span>{user.phone}</span>
           </div>
         </div>
 
@@ -175,14 +150,14 @@ const Profile = () => {
             <>
               <button
                 onClick={handleSave}
-                className="px-6 py-2 rounded-lg bg-[#0b1320] text-white"
+                className="px-6 py-2 rounded-lg bg-green-600 text-white"
               >
                 Save
               </button>
 
               <button
                 onClick={() => setEditMode(false)}
-                className="px-6 py-2 rounded-lg border"
+                className="px-6 py-2 rounded-lg border border-white/20"
               >
                 Cancel
               </button>
@@ -190,7 +165,7 @@ const Profile = () => {
           ) : (
             <button
               onClick={() => setEditMode(true)}
-              className="px-6 py-2 rounded-lg bg-[#0b1320] text-white"
+              className="px-6 py-2 rounded-lg bg-blue-600 text-white"
             >
               Edit Profile
             </button>

@@ -1,5 +1,9 @@
 const pool = require("../db");
 
+/* ---------------- PRICE HISTORY STORAGE (IN MEMORY) ---------------- */
+
+const priceHistory = {};
+
 /* ---------------- GET ALL (WITH SEARCH) ---------------- */
 exports.getCoins = async (req, res) => {
   try {
@@ -20,6 +24,64 @@ exports.getCoins = async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error("GET COINS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ---------------- GET SINGLE COIN (LIVE SIMULATION) ---------------- */
+exports.getCoinById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      "SELECT * FROM coins WHERE id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Coin not found" });
+    }
+
+    let coin = result.rows[0];
+
+    // 🔥 Simulate small live price change
+    const randomChange = (Math.random() * 2 - 1).toFixed(2);
+    const newPrice =
+      Number(coin.current_price) + Number(randomChange);
+
+    coin.current_price = Number(newPrice.toFixed(2));
+    coin.change_24h = Number(randomChange);
+
+    // 🔥 Store history
+    if (!priceHistory[id]) {
+      priceHistory[id] = [];
+    }
+
+    priceHistory[id].push({
+      timestamp: Date.now(),
+      price: coin.current_price,
+    });
+
+    // Keep only last 20 data points
+    if (priceHistory[id].length > 20) {
+      priceHistory[id].shift();
+    }
+
+    res.json(coin);
+  } catch (err) {
+    console.error("GET SINGLE COIN ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ---------------- GET PRICE HISTORY ---------------- */
+exports.getCoinHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    res.json(priceHistory[id] || []);
+  } catch (err) {
+    console.error("GET HISTORY ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

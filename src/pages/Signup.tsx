@@ -86,15 +86,7 @@ const Signup = () => {
         }
       );
 
-      // 🔥 SAFE JSON PARSING (prevents Unexpected token < error)
-      const text = await response.text();
-      let data;
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error("Server returned invalid response");
-      }
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || "Signup failed");
@@ -103,9 +95,9 @@ const Signup = () => {
       // ✅ Store JWT
       localStorage.setItem("token", data.token);
 
-      // ✅ Store user info
+      // 🔥 IMPORTANT FIX: Store under signupUser
       localStorage.setItem(
-        "user",
+        "signupUser",
         JSON.stringify(data.user)
       );
 
@@ -136,63 +128,13 @@ const Signup = () => {
 
         <form onSubmit={handleSignup} className="space-y-4">
 
-          <input
-            name="firstName"
-            placeholder="First Name"
-            value={form.firstName}
-            onChange={handleChange}
-            className="signup-input"
-          />
-
-          <input
-            name="lastName"
-            placeholder="Last Name"
-            value={form.lastName}
-            onChange={handleChange}
-            className="signup-input"
-          />
-
-          <input
-            name="username"
-            placeholder="Username"
-            value={form.username}
-            onChange={handleChange}
-            className="signup-input"
-          />
-
-          <input
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="signup-input"
-          />
-
-          <input
-            name="phone"
-            placeholder="Phone"
-            value={form.phone}
-            onChange={handleChange}
-            className="signup-input"
-          />
-
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            className="signup-input"
-          />
-
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            className="signup-input"
-          />
+          <input name="firstName" placeholder="First Name" value={form.firstName} onChange={handleChange} className="signup-input" />
+          <input name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleChange} className="signup-input" />
+          <input name="username" placeholder="Username" value={form.username} onChange={handleChange} className="signup-input" />
+          <input name="email" placeholder="Email" value={form.email} onChange={handleChange} className="signup-input" />
+          <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} className="signup-input" />
+          <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} className="signup-input" />
+          <input type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} className="signup-input" />
 
           <button
             disabled={loading}
@@ -205,10 +147,7 @@ const Signup = () => {
         <div className="mt-8 text-center">
           <p className="text-gray-500 text-sm">
             Already a member?
-            <Link
-              to="/login"
-              className="text-emerald-400 font-semibold ml-2"
-            >
+            <Link to="/login" className="text-emerald-400 font-semibold ml-2">
               Log In
             </Link>
           </p>
