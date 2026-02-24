@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
+import { io, Socket } from "socket.io-client";
 import "chart.js/auto";
 
 import Loader from "../components/Loader";
-import { CoinDetailsData, PricePoint } from "../types/common";
+import { CoinDetailsData } from "../types/common";
+
+interface PricePoint {
+  timestamp: number;
+  price: number;
+}
 
 const CoinDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,46 +20,89 @@ const CoinDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchCoinData = async () => {
+  /* ---------------- INITIAL FETCH ---------------- */
+
+  const fetchInitialData = async () => {
     try {
       const coinRes = await fetch(
         `http://localhost:5000/api/coins/${id}`
       );
       if (!coinRes.ok) throw new Error();
-
       const coinData = await coinRes.json();
 
       const historyRes = await fetch(
         `http://localhost:5000/api/coins/${id}/history`
       );
       if (!historyRes.ok) throw new Error();
-
       const historyData = await historyRes.json();
 
       setCoin(coinData);
       setPrices(historyData || []);
+      setLoading(false);
     } catch {
       setError("Failed to load coin details.");
-    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
     if (!id) return;
-    fetchCoinData();
-    const interval = setInterval(fetchCoinData, 30000);
-    return () => clearInterval(interval);
+    fetchInitialData();
   }, [id]);
 
+  /* ---------------- SOCKET ---------------- */
+
+  useEffect(() => {
+    if (!id) return;
+
+    const socket: Socket = io("http://localhost:5000");
+
+    socket.on("priceUpdate", (update: any) => {
+      if (String(update.coinId) !== id) return;
+
+      // Update coin price
+      setCoin((prev) =>
+        prev
+          ? {
+              ...prev,
+              current_price: update.current_price,
+            }
+          : prev
+      );
+
+      // Update chart
+      setPrices((prev) => {
+        const newPoint: PricePoint = {
+          timestamp: update.timestamp,
+          price: update.current_price,
+        };
+
+        const updated = [...prev, newPoint];
+
+        // keep last 20 points only
+        return updated.slice(-20);
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [id]);
+
+  /* ---------------- STATES ---------------- */
+
   if (loading) return <Loader />;
+
   if (error)
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-red-500">{error}</p>
       </div>
     );
+
   if (!coin) return null;
+
+  /* ---------------- CHART DATA ---------------- */
 
   const chartData = {
     labels: prices.map((p) =>
@@ -95,9 +144,8 @@ const CoinDetails = () => {
     <div className="min-h-screen bg-white">
       <div className="max-w-5xl mx-auto px-6 py-10">
 
-        {/* HEADER + BUY SELL */}
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mb-10">
-
           <div className="flex items-center gap-4">
             {coin.image && (
               <img
@@ -106,7 +154,6 @@ const CoinDetails = () => {
                 className="w-14 h-14 rounded-full shadow"
               />
             )}
-
             <div>
               <h1 className="text-3xl font-bold text-black">
                 {coin.name}
@@ -121,32 +168,24 @@ const CoinDetails = () => {
             <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition">
               Buy
             </button>
-
             <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition">
               Sell
             </button>
           </div>
         </div>
 
-        {/* 24H CHANGE CARD */}
+        {/* LIVE CARD */}
         <div
           className="rounded-2xl p-6 shadow-xl mb-8 text-white"
           style={{ backgroundColor: "#111A2B" }}
         >
-          <p className="text-gray-300">24h Change</p>
-
-          <p
-            className={`text-2xl font-bold ${
-              coin.change_24h && coin.change_24h >= 0
-                ? "text-green-400"
-                : "text-red-400"
-            }`}
-          >
-            {coin.change_24h?.toFixed(2)}%
+          <p className="text-gray-300">Live Market</p>
+          <p className="text-2xl font-bold">
+            ${coin.current_price}
           </p>
         </div>
 
-        {/* CHART CARD */}
+        {/* CHART */}
         <div
           className="rounded-2xl p-6 shadow-xl text-white"
           style={{ backgroundColor: "#111A2B" }}
