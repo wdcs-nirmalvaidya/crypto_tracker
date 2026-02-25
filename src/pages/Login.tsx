@@ -16,12 +16,20 @@ const Login = () => {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  // ✅ Auto open login after signup
+  /* 🔥 Forgot Password State */
+  const [showForgot, setShowForgot] = useState<boolean>(false);
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [resetError, setResetError] = useState<string>("");
+  const [resetLoading, setResetLoading] = useState<boolean>(false);
+
   useEffect(() => {
     if (state?.fromSignup) {
       setShowLogin(true);
     }
   }, [state]);
+
+  /* ================= LOGIN ================= */
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,12 +47,10 @@ const Login = () => {
         "http://localhost:5000/api/auth/login",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             usernameOrEmail: username,
-            password: password,
+            password,
           }),
         }
       );
@@ -55,17 +61,11 @@ const Login = () => {
         throw new Error(data.message || "Login failed");
       }
 
-      // 🔥 IMPORTANT: Clear old tokens first
       localStorage.clear();
-
-      // ✅ Store NEW tokens
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
-
-      // ✅ Store user
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // ✅ Navigate AFTER storage
       navigate("/home", { replace: true });
 
     } catch (err: any) {
@@ -75,8 +75,62 @@ const Login = () => {
     }
   };
 
+  /* ================= RESET PASSWORD ================= */
+
+  const handleResetPassword = async () => {
+    setResetError("");
+
+    if (!username) {
+      setResetError("Enter your email in login field first");
+      return;
+    }
+
+    if (!newPassword || !confirmPassword) {
+      setResetError("All fields are required");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setResetError("Passwords do not match");
+      return;
+    }
+
+    try {
+      setResetLoading(true);
+
+      const response = await fetch(
+        "http://localhost:5000/api/auth/reset-password",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: username,
+            newPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setShowForgot(false);
+      setNewPassword("");
+      setConfirmPassword("");
+      alert("Password updated successfully!");
+
+    } catch (err: any) {
+      setResetError(err.message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen overflow-hidden">
+      {/* VIDEO BACKGROUND */}
       <video
         autoPlay
         loop
@@ -124,8 +178,9 @@ const Login = () => {
           )}
 
           {showLogin && (
-            <div className="mt-10 mx-auto w-[380px] rounded-2xl p-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl text-white">
+            <div className="mt-10 mx-auto w-[380px] rounded-2xl p-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl text-white relative">
               <form onSubmit={handleLogin} className="space-y-4">
+
                 {error && (
                   <p className="text-red-400 text-sm text-center">
                     {error}
@@ -156,6 +211,14 @@ const Login = () => {
                 </button>
               </form>
 
+              {/* Forgot Password Link */}
+              <p
+                onClick={() => setShowForgot(true)}
+                className="mt-4 text-sm text-blue-300 hover:underline cursor-pointer text-center"
+              >
+                Forgot Password?
+              </p>
+
               <button
                 onClick={() => setShowLogin(false)}
                 className="mt-4 text-sm text-gray-300 hover:underline"
@@ -164,9 +227,61 @@ const Login = () => {
               </button>
             </div>
           )}
-
         </div>
       </div>
+
+      {/* 🔥 GLASS RESET POPUP */}
+      {showForgot && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="mt-10 mx-auto w-[380px] rounded-2xl p-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl text-white relative">
+
+            <h2 className="text-xl font-bold mb-6 text-center">
+              Reset Password
+            </h2>
+
+            {resetError && (
+              <p className="text-red-400 text-sm mb-4 text-center">
+                {resetError}
+              </p>
+            )}
+
+            <input
+              type="password"
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+            />
+
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:ring-2 focus:ring-blue-500 mb-6"
+            />
+
+            <div className="flex justify-between">
+              <button
+                onClick={() => setShowForgot(false)}
+                className="px-5 py-2 rounded-lg border border-white/40 hover:bg-white/10 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleResetPassword}
+                disabled={resetLoading}
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                {resetLoading ? "Updating..." : "Reset"}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

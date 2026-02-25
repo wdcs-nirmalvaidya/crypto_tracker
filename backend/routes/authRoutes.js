@@ -81,17 +81,15 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // 🔥 ACCESS TOKEN (force uniqueness)
     const accessToken = jwt.sign(
       {
         id: user.id,
-        tokenVersion: Date.now() // 🔥 makes token always unique
+        tokenVersion: Date.now()
       },
       process.env.JWT_SECRET,
-      { expiresIn: "2m" } // testing
+      { expiresIn: "2m" }
     );
 
-    // 🔥 REFRESH TOKEN
     const refreshToken = jwt.sign(
       {
         id: user.id,
@@ -101,7 +99,6 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // Save refresh token in DB
     await pool.query(
       "UPDATE users SET refresh_token = $1 WHERE id = $2",
       [refreshToken, user.id]
@@ -119,6 +116,45 @@ router.post("/login", async (req, res) => {
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+/* ================= 🔥 RESET PASSWORD ================= */
+router.put("/reset-password", async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  try {
+    if (!email || !newPassword) {
+      return res.status(400).json({
+        message: "Email and new password required",
+      });
+    }
+
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // 🔐 HASH NEW PASSWORD
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      "UPDATE users SET password = $1 WHERE email = $2",
+      [hashedPassword, email]
+    );
+
+    res.json({ message: "Password updated successfully" });
+
+  } catch (err) {
+    console.error("RESET PASSWORD ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -149,15 +185,14 @@ router.post("/refresh", async (req, res) => {
       });
     }
 
-    // 🔥 NEW ACCESS TOKEN (always unique)
-   const newAccessToken = jwt.sign(
-  { 
-    id: decoded.id,
-    refreshedAt: Date.now()   // 🔥 add this
-  },
-  process.env.JWT_SECRET,
-  { expiresIn: "5h" }
-);
+    const newAccessToken = jwt.sign(
+      { 
+        id: decoded.id,
+        refreshedAt: Date.now()
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "5h" }
+    );
 
     res.json({ accessToken: newAccessToken });
 
