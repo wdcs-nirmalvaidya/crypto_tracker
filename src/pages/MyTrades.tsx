@@ -6,6 +6,12 @@ const MyTrades = () => {
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 Popup state
+  const [showPopup, setShowPopup] = useState(false);
+  const [balanceType, setBalanceType] = useState<"add" | "subtract">("add");
+  const [amount, setAmount] = useState<number>();
+  const [message, setMessage] = useState("");
+
   const tradeUserId = localStorage.getItem("tradeUserId");
 
   useEffect(() => {
@@ -13,7 +19,6 @@ const MyTrades = () => {
       if (!tradeUserId) return;
 
       const data = await getTradeUser(tradeUserId);
-
       setBalance(data.balance);
       setPortfolio(data.portfolio);
       setLoading(false);
@@ -22,12 +27,10 @@ const MyTrades = () => {
     fetchData();
   }, []);
 
-  /* 🔥 Add / Subtract Balance */
-  const updateBalance = async (type: "add" | "subtract") => {
-    const amount = Number(prompt("Enter amount"));
-
+  /* 🔥 Confirm Balance Update */
+  const confirmUpdateBalance = async () => {
     if (!amount || amount <= 0) {
-      alert("Invalid amount");
+      setMessage("Please enter valid amount");
       return;
     }
 
@@ -40,7 +43,7 @@ const MyTrades = () => {
           body: JSON.stringify({
             userId: tradeUserId,
             amount,
-            type,
+            type: balanceType,
           }),
         }
       );
@@ -48,15 +51,27 @@ const MyTrades = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message);
+        setMessage(data.message);
         return;
       }
 
       setBalance(data.balance);
 
+      if (balanceType === "add") {
+        setMessage("✅ Balance added successfully");
+      } else {
+        setMessage("✅ Balance deducted successfully");
+      }
+
+      setShowPopup(false);
+      setAmount(0);
+
+      // Hide message after 2 seconds
+      setTimeout(() => setMessage(""), 2000);
+
     } catch (err) {
       console.error(err);
-      alert("Balance update failed");
+      setMessage("Balance update failed");
     }
   };
 
@@ -65,6 +80,13 @@ const MyTrades = () => {
   return (
     <div className="min-h-screen bg-white px-10 py-10">
       <h1 className="text-3xl font-bold mb-8">My Trades</h1>
+
+      {/* SUCCESS MESSAGE */}
+      {message && (
+        <div className="mb-4 bg-green-100 text-green-700 px-4 py-2 rounded-lg">
+          {message}
+        </div>
+      )}
 
       {/* 🔥 BALANCE CARD */}
       <div className="bg-[#111A2B] text-white p-6 rounded-2xl shadow-xl flex justify-between items-center mb-8">
@@ -77,14 +99,20 @@ const MyTrades = () => {
 
         <div className="flex gap-3">
           <button
-            onClick={() => updateBalance("add")}
+            onClick={() => {
+              setBalanceType("add");
+              setShowPopup(true);
+            }}
             className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold"
           >
             +
           </button>
 
           <button
-            onClick={() => updateBalance("subtract")}
+            onClick={() => {
+              setBalanceType("subtract");
+              setShowPopup(true);
+            }}
             className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-bold"
           >
             -
@@ -110,6 +138,53 @@ const MyTrades = () => {
           ))
         )}
       </div>
+
+      {/* 🔥 BALANCE POPUP */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div
+            className="rounded-2xl p-6 shadow-xl text-white w-[380px]"
+            style={{ backgroundColor: "#111A2B" }}
+          >
+            <h2 className="text-xl font-bold mb-4">
+              {balanceType === "add"
+                ? "Add Balance"
+                : "Withdraw Balance"}
+            </h2>
+
+            <input
+              type="number"
+              placeholder="Enter amount"
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
+              className="w-full mt-4 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white outline-none"
+            />
+
+            <div className="flex justify-between mt-6">
+              <button
+                onClick={() => {
+                  setShowPopup(false);
+                  setAmount(0);
+                }}
+                className="px-4 py-2 border border-white/30 rounded-lg"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmUpdateBalance}
+                className={`px-4 py-2 rounded-lg ${
+                  balanceType === "add"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
