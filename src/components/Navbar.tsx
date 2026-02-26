@@ -121,6 +121,12 @@ const Navbar: React.FC = () => {
           <Link className={linkClass("/watchlist")} to="/watchlist">
             Watchlist
           </Link>
+          <Link
+  to="/my-trades"
+  className="hover:text-blue-400 transition"
+>
+  My Trades
+</Link>
 
           {/* 🔍 Search */}
           <div className="relative">

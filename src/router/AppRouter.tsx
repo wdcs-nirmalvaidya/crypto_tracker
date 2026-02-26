@@ -17,6 +17,7 @@ import ExchangeDetails from "../pages/ExchangeDetails";
 import Layout from "../components/Layout";
 import AddCoin from "../pages/AddCoin";
 import AddExchange from "../pages/AddExchange";
+import MyTrades from "../pages/MyTrades";
 
 /* ---------------- Protected Route ---------------- */
 
@@ -151,6 +152,18 @@ const AppRouter: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <AddExchange />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ FIXED My Trades Route */}
+        <Route
+          path="/my-trades"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MyTrades />
               </Layout>
             </ProtectedRoute>
           }

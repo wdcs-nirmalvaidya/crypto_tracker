@@ -87,7 +87,7 @@ router.post("/login", async (req, res) => {
         tokenVersion: Date.now()
       },
       process.env.JWT_SECRET,
-      { expiresIn: "2m" }
+      { expiresIn: "5h" }
     );
 
     const refreshToken = jwt.sign(

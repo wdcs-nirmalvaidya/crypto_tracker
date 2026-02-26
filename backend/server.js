@@ -22,6 +22,9 @@ const io = new Server(server, {
   },
 });
 
+/* 🔥 Track connected users */
+const connectedUsers = new Map();
+
 /* ---------------- MIDDLEWARE ---------------- */
 
 app.use(cors());
@@ -40,50 +43,35 @@ app.use("/api/exchanges", exchangeRoutes);
 app.use("/api/watchlist", watchlistRoutes);
 app.use("/api/auth", authRoutes);
 
-
-
-const updateCoinPrices = async () => {
-  try {
-    const result = await pool.query("SELECT * FROM coins");
-
-    for (const coin of result.rows) {
-      const currentPrice = parseFloat(coin.current_price);
-
-      const changePercent = (Math.random() * 10 - 5) / 100;
-
-      const newPrice = currentPrice + currentPrice * changePercent;
-
-      const safePrice = newPrice < 0 ? 1 : newPrice;
-      const finalPrice = parseFloat(safePrice.toFixed(2));
-
-      await pool.query(
-        "UPDATE coins SET current_price = $1 WHERE id = $2",
-        [finalPrice, coin.id]
-      );
-
-      // 🔥 EMIT REAL-TIME UPDATE
-      io.emit("priceUpdate", {
-        coinId: coin.id,
-        current_price: finalPrice,
-        timestamp: Date.now(),
-      });
-    }
-
-    console.log("📈 Prices updated & broadcasted");
-  } catch (err) {
-    console.error("MARKET UPDATE ERROR:", err);
-  }
-};
-
-setInterval(updateCoinPrices, 30000);
-
 /* ---------------- SOCKET CONNECTION ---------------- */
 
 io.on("connection", (socket) => {
-  console.log("🔌 User connected:", socket.id);
+  const userId = socket.handshake.auth?.userId;
+
+  if (!userId) {
+    console.log("⚠️ Anonymous socket rejected:", socket.id);
+    socket.disconnect();
+    return;
+  }
+
+  console.log(`🔌 User connected: ${userId}`);
+
+  /* 🔥 If user already connected, disconnect old socket */
+  if (connectedUsers.has(userId)) {
+    const oldSocketId = connectedUsers.get(userId);
+    const oldSocket = io.sockets.sockets.get(oldSocketId);
+
+    if (oldSocket) {
+      oldSocket.disconnect();
+      console.log(`♻️ Previous socket disconnected for user ${userId}`);
+    }
+  }
+
+  connectedUsers.set(userId, socket.id);
 
   socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", socket.id);
+    console.log(`❌ User disconnected: ${userId}`);
+    connectedUsers.delete(userId);
   });
 });
 
