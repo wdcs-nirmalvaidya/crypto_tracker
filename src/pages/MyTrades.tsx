@@ -10,7 +10,10 @@ const MyTrades = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [balanceType, setBalanceType] = useState<"add" | "subtract">("add");
   const [amount, setAmount] = useState<number>();
+
+  // 🔥 Message state
   const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
 
   const tradeUserId = localStorage.getItem("tradeUserId");
 
@@ -31,6 +34,7 @@ const MyTrades = () => {
   const confirmUpdateBalance = async () => {
     if (!amount || amount <= 0) {
       setMessage("Please enter valid amount");
+      setIsError(true);
       return;
     }
 
@@ -52,26 +56,24 @@ const MyTrades = () => {
 
       if (!res.ok) {
         setMessage(data.message);
+        setIsError(true); // 🔴 error
         return;
       }
 
       setBalance(data.balance);
-
-      if (balanceType === "add") {
-        setMessage("✅ Balance added successfully");
-      } else {
-        setMessage("✅ Balance deducted successfully");
-      }
+      setMessage(data.message);
+      setIsError(false); // 🟢 success
 
       setShowPopup(false);
       setAmount(0);
 
-      // Hide message after 2 seconds
-      setTimeout(() => setMessage(""), 2000);
+      // Auto hide after 2 seconds
+      setTimeout(() => setMessage(""), 5000);
 
     } catch (err) {
       console.error(err);
       setMessage("Balance update failed");
+      setIsError(true);
     }
   };
 
@@ -81,9 +83,15 @@ const MyTrades = () => {
     <div className="min-h-screen bg-white px-10 py-10">
       <h1 className="text-3xl font-bold mb-8">My Trades</h1>
 
-      {/* SUCCESS MESSAGE */}
+      {/* 🔥 MESSAGE BOX */}
       {message && (
-        <div className="mb-4 bg-green-100 text-green-700 px-4 py-2 rounded-lg">
+        <div
+          className={`mb-4 px-4 py-2 rounded-lg font-medium ${
+            isError
+              ? "bg-red-100 text-red-700 border border-red-400"
+              : "bg-green-100 text-green-700 border border-green-400"
+          }`}
+        >
           {message}
         </div>
       )}
@@ -120,7 +128,7 @@ const MyTrades = () => {
         </div>
       </div>
 
-      {/* PORTFOLIO */}
+      {/* 🔥 PORTFOLIO */}
       <div className="bg-[#111A2B] text-white p-6 rounded-2xl shadow-xl">
         <h2 className="text-xl mb-4 font-semibold">Portfolio</h2>
 
