@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
-import { io, Socket } from "socket.io-client";
 import "chart.js/auto";
 import { getSocket } from "../socket";
 
@@ -24,7 +23,7 @@ const CoinDetails = () => {
 
   const [showPopup, setShowPopup] = useState(false);
   const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
-  const [quantity, setQuantity] = useState<number>();
+  const [quantity, setQuantity] = useState<number>(0);
 
   const [tradeUserId, setTradeUserId] = useState<string | null>(null);
   const [tradeUserLoading, setTradeUserLoading] = useState(true);
@@ -34,6 +33,8 @@ const CoinDetails = () => {
   // 🔥 OTP
   const [otp, setOtp] = useState("");
   const [otpStep, setOtpStep] = useState(false);
+  const [timer, setTimer] = useState(30);
+  const [canResend, setCanResend] = useState(false);
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
@@ -83,73 +84,82 @@ const CoinDetails = () => {
   };
 
   /* ---------------- INITIAL FETCH ---------------- */
-  const fetchInitialData = async () => {
-    try {
-      const coinRes = await fetch(
-        `http://localhost:5000/api/coins/${id}`
-      );
-      if (!coinRes.ok) throw new Error();
-      const coinData = await coinRes.json();
-
-      const historyRes = await fetch(
-        `http://localhost:5000/api/coins/${id}/history`
-      );
-      if (!historyRes.ok) throw new Error();
-      const historyData = await historyRes.json();
-
-      setCoin(coinData);
-      setPrices(historyData || []);
-      setLoading(false);
-
-      fetchMarketQuantity(coinData.name);
-    } catch {
-      setError("Failed to load coin details.");
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (!id) return;
-    fetchInitialData();
+    const fetchInitialData = async () => {
+      try {
+        const coinRes = await fetch(
+          `http://localhost:5000/api/coins/${id}`
+        );
+        if (!coinRes.ok) throw new Error();
+        const coinData = await coinRes.json();
+
+        const historyRes = await fetch(
+          `http://localhost:5000/api/coins/${id}/history`
+        );
+        if (!historyRes.ok) throw new Error();
+        const historyData = await historyRes.json();
+
+        setCoin(coinData);
+        setPrices(historyData || []);
+        setLoading(false);
+
+        fetchMarketQuantity(coinData.name);
+      } catch {
+        setError("Failed to load coin details.");
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchInitialData();
   }, [id]);
 
   /* ---------------- SOCKET ---------------- */
- /* ---------------- SOCKET ---------------- */
-/* ---------------- SOCKET ---------------- */
+  useEffect(() => {
+    if (!id || !user?.id) return;
 
-/* ---------------- SOCKET ---------------- */
-useEffect(() => {
-  if (!id) return;
+    const socket = getSocket(user.id);
 
-  const storedUser = localStorage.getItem("user");
-  const user = storedUser ? JSON.parse(storedUser) : null;
+    const handlePriceUpdate = (update: any) => {
+      if (String(update.coinId) !== id) return;
 
-  if (!user?.id) return;
+      setCoin((prev) =>
+        prev ? { ...prev, current_price: update.current_price } : prev
+      );
 
-  const socket = getSocket(user.id);
+      setPrices((prev) => {
+        const newPoint = {
+          timestamp: update.timestamp,
+          price: update.current_price,
+        };
+        return [...prev, newPoint].slice(-20);
+      });
+    };
 
-  const handlePriceUpdate = (update: any) => {
-    if (String(update.coinId) !== id) return;
+    socket.on("priceUpdate", handlePriceUpdate);
 
-    setCoin((prev) =>
-      prev ? { ...prev, current_price: update.current_price } : prev
-    );
+    return () => {
+      socket.off("priceUpdate", handlePriceUpdate);
+    };
+  }, [id]);
 
-    setPrices((prev) => {
-      const newPoint = {
-        timestamp: update.timestamp,
-        price: update.current_price,
-      };
-      return [...prev, newPoint].slice(-20);
-    });
-  };
+  /* ---------------- OTP TIMER ---------------- */
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
 
-  socket.on("priceUpdate", handlePriceUpdate);
+    if (otpStep && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
 
-  return () => {
-    socket.off("priceUpdate", handlePriceUpdate);
-  };
-}, [id]);
+    if (timer === 0) {
+      setCanResend(true);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [otpStep, timer]);
 
   /* ---------------- SEND OTP ---------------- */
   const handleTrade = async () => {
@@ -165,17 +175,32 @@ useEffect(() => {
 
     try {
       await sendOtp(tradeUserId);
-      alert("OTP sent! Check backend console.");
       setOtpStep(true);
+      setTimer(30);
+      setCanResend(false);
     } catch (err) {
       console.error(err);
       alert("Failed to send OTP");
     }
   };
 
+  /* ---------------- RESEND OTP ---------------- */
+  const handleResendOtp = async () => {
+    if (!tradeUserId) return;
+
+    try {
+      await sendOtp(tradeUserId);
+      setTimer(30);
+      setCanResend(false);
+    } catch (err) {
+      console.error(err);
+      alert("Resend failed");
+    }
+  };
+
   /* ---------------- VERIFY + EXECUTE ---------------- */
   const confirmOtpAndTrade = async () => {
-    if (!coin || !tradeUserId || quantity === undefined || quantity <= 0) return;
+    if (!coin || !tradeUserId || quantity <= 0 || timer === 0) return;
 
     try {
       const verifyRes = await verifyOtp(tradeUserId, otp);
@@ -211,6 +236,8 @@ useEffect(() => {
       setQuantity(0);
       setOtp("");
       setOtpStep(false);
+      setTimer(30);
+      setCanResend(false);
 
     } catch (err) {
       console.error(err);
@@ -219,7 +246,6 @@ useEffect(() => {
   };
 
   if (loading) return <Loader />;
-
   if (error)
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -349,26 +375,49 @@ useEffect(() => {
               {tradeType.toUpperCase()} {coin.name}
             </h2>
 
-            <p className="text-gray-300">
-              Current Price: ${coin.current_price}
-            </p>
+          <p className="text-gray-300">
+  Current Price: ${coin.current_price}
+</p>
 
+{/* ✅ TOTAL (ADDED ONLY THIS) */}
+<p className="text-gray-300 mt-1">
+  Total: ${(quantity * coin.current_price).toFixed(2)}
+</p>
             <input
               type="number"
               placeholder="Enter quantity"
-              value={quantity}
+              value={quantity || ""}
               onChange={(e) => setQuantity(Number(e.target.value))}
               className="w-full mt-4 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white outline-none"
             />
 
             {otpStep && (
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full mt-4 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white outline-none"
-              />
+              <>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full mt-4 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white outline-none"
+                />
+
+                <div className="mt-2 text-sm text-gray-400">
+                  {timer > 0 ? (
+                    <span>OTP expires in {timer}s</span>
+                  ) : (
+                    <span className="text-red-400">OTP expired</span>
+                  )}
+                </div>
+
+                {canResend && (
+                  <button
+                    onClick={handleResendOtp}
+                    className="mt-2 text-blue-400 hover:text-blue-300 text-sm"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </>
             )}
 
             <div className="flex justify-between mt-6">
@@ -377,6 +426,8 @@ useEffect(() => {
                   setShowPopup(false);
                   setOtp("");
                   setOtpStep(false);
+                  setTimer(30);
+                  setCanResend(false);
                 }}
                 className="px-4 py-2 border border-white/30 rounded-lg"
               >
@@ -397,7 +448,12 @@ useEffect(() => {
               ) : (
                 <button
                   onClick={confirmOtpAndTrade}
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700"
+                  disabled={timer === 0}
+                  className={`px-4 py-2 rounded-lg ${
+                    timer === 0
+                      ? "bg-gray-600 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
                 >
                   Verify & Confirm
                 </button>
