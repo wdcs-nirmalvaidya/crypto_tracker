@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const Order = require("../models/Order");
+const Market = require("../models/Market");
+const { publishToQueue } = require("../rabbitmq/rabbitmq");
 
 /* ================= CONSTANTS ================= */
 const MAX_BALANCE = 100000;
 const MIN_BALANCE = 100;
-
-/* ================= MARKET SUPPLY ================= */
-let marketSupply = {};
 
 /* ================= CREATE USER ================= */
 router.post("/create-user", async (req, res) => {
@@ -38,7 +38,7 @@ router.post("/create-user", async (req, res) => {
   }
 });
 
-/* ================= GET USER (FOR MYTRADES PAGE) ================= */
+/* ================= GET USER ================= */
 router.get("/user/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -117,16 +117,27 @@ router.post("/verify-otp", async (req, res) => {
 });
 
 /* ================= MARKET QUANTITY ================= */
-router.get("/market-quantity/:coin", (req, res) => {
-  const { coin } = req.params;
+router.get("/market-quantity/:coin", async (req, res) => {
+  try {
+    const { coin } = req.params;
 
-  if (marketSupply[coin] === undefined) {
-    marketSupply[coin] = 2000;
+    let market = await Market.findOne({ coin });
+
+    if (!market) {
+      market = await Market.create({
+        coin,
+        availableQuantity: 2000,
+      });
+    }
+
+    return res.json({
+      totalAvailableQuantity: market.availableQuantity,
+    });
+
+  } catch (error) {
+    console.error("MARKET FETCH ERROR:", error);
+    return res.status(500).json({ message: "Server error" });
   }
-
-  return res.json({
-    totalAvailableQuantity: marketSupply[coin],
-  });
 });
 
 /* ================= BUY ================= */
@@ -150,16 +161,6 @@ router.post("/buy", async (req, res) => {
       });
     }
 
-    if (marketSupply[coin] === undefined) {
-      marketSupply[coin] = 2000;
-    }
-
-    if (parsedQuantity > marketSupply[coin]) {
-      return res.status(400).json({
-        message: "Not enough market quantity available",
-      });
-    }
-
     const totalCost = parsedPrice * parsedQuantity;
 
     if (user.balance < totalCost) {
@@ -168,25 +169,22 @@ router.post("/buy", async (req, res) => {
       });
     }
 
-    user.balance -= totalCost;
-    marketSupply[coin] -= parsedQuantity;
+    const order = await Order.create({
+      userId,
+      coin,
+      type: "BUY",
+      price: parsedPrice,
+      quantity: parsedQuantity,
+      status: "PENDING",
+    });
 
-    const existingCoin = user.portfolio.find(c => c.coin === coin);
-
-    if (existingCoin) {
-      existingCoin.quantity += parsedQuantity;
-    } else {
-      user.portfolio.push({ coin, quantity: parsedQuantity });
-    }
-
-    user.otpVerified = false;
-    await user.save();
+    publishToQueue({
+      orderId: order._id,
+    });
 
     return res.json({
-      message: "Buy successful",
-      balance: user.balance,
-      portfolio: user.portfolio,
-      marketQuantity: marketSupply[coin],
+      message: "Buy order placed successfully",
+      orderId: order._id,
     });
 
   } catch (err) {
@@ -224,27 +222,22 @@ router.post("/sell", async (req, res) => {
       });
     }
 
-    if (marketSupply[coin] === undefined) {
-      marketSupply[coin] = 2000;
-    }
+    const order = await Order.create({
+      userId,
+      coin,
+      type: "SELL",
+      price: parsedPrice,
+      quantity: parsedQuantity,
+      status: "PENDING",
+    });
 
-    existingCoin.quantity -= parsedQuantity;
-    marketSupply[coin] += parsedQuantity;
-
-    if (existingCoin.quantity === 0) {
-      user.portfolio = user.portfolio.filter(c => c.coin !== coin);
-    }
-
-    user.balance += parsedPrice * parsedQuantity;
-    user.otpVerified = false;
-
-    await user.save();
+    publishToQueue({
+      orderId: order._id,
+    });
 
     return res.json({
-      message: "Sell successful",
-      balance: user.balance,
-      portfolio: user.portfolio,
-      marketQuantity: marketSupply[coin],
+      message: "Sell order placed successfully",
+      orderId: order._id,
     });
 
   } catch (err) {

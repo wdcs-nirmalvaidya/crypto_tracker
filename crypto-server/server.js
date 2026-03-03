@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
+const { connectRabbitMQ } = require("./rabbitmq/rabbitmq"); // ✅ ADD THIS
+
 const app = express();
 
 app.use(express.json());
@@ -14,6 +16,9 @@ console.log("Starting trade server...");
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log("Mongo Error:", err));
+
+// ✅ Connect RabbitMQ (STEP 3 ADDED HERE)
+connectRabbitMQ();
 
 // ✅ Register Trade Routes
 app.use("/api/trade", require("./routes/tradeRoutes"));
