@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import CoinCard from "../components/CoinCard";
 import Pagination from "../components/Pagination";
 import { Coin } from "../types/common";
+import { API_BASE_URL } from "../config";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -22,7 +23,7 @@ const Home = () => {
   const fetchCoins = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/coins?search=${search}`
+        `${API_BASE_URL}/coins?search=${search}`
       );
 
       if (!res.ok) {
@@ -38,7 +39,7 @@ const Home = () => {
 
   const fetchWatchlist = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/watchlist");
+      const res = await fetch(`${API_BASE_URL}/watchlist`);
       const data = await res.json();
       const ids = data.map((coin: any) => coin.id);
       setWatchlistIds(ids);
@@ -65,7 +66,7 @@ const Home = () => {
     try {
       if (watchlistIds.includes(coinId)) {
         await fetch(
-          `http://localhost:5000/api/watchlist/${coinId}`,
+          `${API_BASE_URL}/watchlist/${coinId}`,
           { method: "DELETE" }
         );
         setWatchlistIds(
@@ -73,7 +74,7 @@ const Home = () => {
         );
       } else {
         await fetch(
-          "http://localhost:5000/api/watchlist",
+          `${API_BASE_URL}/watchlist`,
           {
             method: "POST",
             headers: {
@@ -90,7 +91,7 @@ const Home = () => {
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`http://localhost:5000/api/coins/${id}`, {
+    await fetch(`${API_BASE_URL}/coins/${id}`, {
       method: "DELETE",
     });
     fetchCoins();

@@ -4,6 +4,7 @@ import CoinCard from "../components/CoinCard";
 import Pagination from "../components/Pagination";
 import Loader from "../components/Loader";
 import { Coin } from "../types/common";
+import { API_BASE_URL } from "../config";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -27,7 +28,7 @@ const Watchlist = () => {
       setLoading(true);
 
       const res = await fetch(
-        `http://localhost:5000/api/watchlist?search=${search}`
+        `${API_BASE_URL}/watchlist?search=${search}`
       );
 
       if (!res.ok) {
@@ -46,7 +47,7 @@ const Watchlist = () => {
   const removeFromWatchlist = async (coinId: string) => {
     try {
       await fetch(
-        `http://localhost:5000/api/watchlist/${coinId}`,
+        `${API_BASE_URL}/watchlist/${coinId}`,
         { method: "DELETE" }
       );
 

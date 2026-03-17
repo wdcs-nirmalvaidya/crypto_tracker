@@ -30,4 +30,4 @@ app.get("/", (req, res) => {
 
 app.listen(process.env.PORT, () => {
   console.log(`Trade Server running on port ${process.env.PORT}`);
-});
+});   

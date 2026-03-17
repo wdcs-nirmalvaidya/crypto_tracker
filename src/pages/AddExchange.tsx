@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 
 const AddExchange = () => {
   const navigate = useNavigate();
@@ -112,8 +113,8 @@ const AddExchange = () => {
 
     try {
       const url = editingExchange
-        ? `http://localhost:5000/api/exchanges/${editingExchange.id}`
-        : "http://localhost:5000/api/exchanges";
+        ? `${API_BASE_URL}/exchanges/${editingExchange.id}`
+        : `${API_BASE_URL}/exchanges`;
 
       const method = editingExchange ? "PUT" : "POST";
 

@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:5002/api/trade";
+import { API_BASE_URL } from "../config";
+
+const BASE_URL = `${API_BASE_URL}/trade`;
 
 export const sendOtp = async (userId: string) => {
   const res = await fetch(`${BASE_URL}/send-otp`, {

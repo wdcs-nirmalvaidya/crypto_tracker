@@ -1,10 +1,11 @@
 import { io, Socket } from "socket.io-client";
+import { GATEWAY_URL } from "./config";
 
 let socket: Socket | null = null;
 
 export const getSocket = (userId: number) => {
   if (!socket) {
-    socket = io("http://localhost:5000", {
+    socket = io(GATEWAY_URL, {
       auth: { userId },
       transports: ["websocket"],
     });

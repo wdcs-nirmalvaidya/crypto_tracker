@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Pagination from "../components/Pagination";
 import { Exchange } from "../types/common";
+import { API_BASE_URL } from "../config";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -27,7 +28,7 @@ const Exchanges = () => {
       setLoading(true);
 
       const res = await fetch(
-        `http://localhost:5000/api/exchanges?search=${search}`
+        `${API_BASE_URL}/exchanges?search=${search}`
       );
 
       if (!res.ok) {
@@ -44,7 +45,7 @@ const Exchanges = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`http://localhost:5000/api/exchanges/${id}`, {
+    await fetch(`${API_BASE_URL}/exchanges/${id}`, {
       method: "DELETE",
     });
     fetchExchanges();

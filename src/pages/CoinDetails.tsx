@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 import "chart.js/auto";
 import { getSocket } from "../socket";
+import { API_BASE_URL } from "../config";
 
 import Loader from "../components/Loader";
 import { CoinDetailsData } from "../types/common";
@@ -49,7 +50,7 @@ const CoinDetails = () => {
 
       try {
         const res = await fetch(
-          "http://localhost:5002/api/trade/create-user",
+          `${API_BASE_URL}/trade/create-user`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -74,7 +75,7 @@ const CoinDetails = () => {
   const fetchMarketQuantity = async (coinName: string) => {
     try {
       const res = await fetch(
-        `http://localhost:5002/api/trade/market-quantity/${coinName}`
+        `${API_BASE_URL}/trade/market-quantity/${coinName}`
       );
       const data = await res.json();
       setMarketQty(data.totalAvailableQuantity);
@@ -88,13 +89,13 @@ const CoinDetails = () => {
     const fetchInitialData = async () => {
       try {
         const coinRes = await fetch(
-          `http://localhost:5000/api/coins/${id}`
+          `${API_BASE_URL}/coins/${id}`
         );
         if (!coinRes.ok) throw new Error();
         const coinData = await coinRes.json();
 
         const historyRes = await fetch(
-          `http://localhost:5000/api/coins/${id}/history`
+          `${API_BASE_URL}/coins/${id}/history`
         );
         if (!historyRes.ok) throw new Error();
         const historyData = await historyRes.json();
@@ -375,14 +376,14 @@ const CoinDetails = () => {
               {tradeType.toUpperCase()} {coin.name}
             </h2>
 
-          <p className="text-gray-300">
-  Current Price: ${coin.current_price}
-</p>
+            <p className="text-gray-300">
+              Current Price: ${coin.current_price}
+            </p>
 
-{/* ✅ TOTAL (ADDED ONLY THIS) */}
-<p className="text-gray-300 mt-1">
-  Total: ${(quantity * coin.current_price).toFixed(2)}
-</p>
+            {/* ✅ TOTAL (ADDED ONLY THIS) */}
+            <p className="text-gray-300 mt-1">
+              Total: ${(quantity * coin.current_price).toFixed(2)}
+            </p>
             <input
               type="number"
               placeholder="Enter quantity"
@@ -437,11 +438,10 @@ const CoinDetails = () => {
               {!otpStep ? (
                 <button
                   onClick={handleTrade}
-                  className={`px-4 py-2 rounded-lg ${
-                    tradeType === "buy"
+                  className={`px-4 py-2 rounded-lg ${tradeType === "buy"
                       ? "bg-green-600 hover:bg-green-700"
                       : "bg-red-600 hover:bg-red-700"
-                  }`}
+                    }`}
                 >
                   Send OTP
                 </button>
@@ -449,11 +449,10 @@ const CoinDetails = () => {
                 <button
                   onClick={confirmOtpAndTrade}
                   disabled={timer === 0}
-                  className={`px-4 py-2 rounded-lg ${
-                    timer === 0
+                  className={`px-4 py-2 rounded-lg ${timer === 0
                       ? "bg-gray-600 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                    }`}
                 >
                   Verify & Confirm
                 </button>

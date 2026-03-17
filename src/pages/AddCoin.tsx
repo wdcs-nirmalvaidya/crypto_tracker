@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 
 const AddCoin = () => {
   const navigate = useNavigate();
@@ -71,8 +72,8 @@ const AddCoin = () => {
 
     try {
       const url = editingCoin
-        ? `http://localhost:5000/api/coins/${editingCoin.id}`
-        : "http://localhost:5000/api/coins";
+        ? `${API_BASE_URL}/coins/${editingCoin.id}`
+        : `${API_BASE_URL}/coins`;
 
       const method = editingCoin ? "PUT" : "POST";
 
@@ -117,7 +118,7 @@ const AddCoin = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          
+
           <div>
             <input
               type="text"

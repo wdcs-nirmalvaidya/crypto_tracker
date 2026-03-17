@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 
 interface LocationState {
   fromSignup?: boolean;
@@ -44,7 +45,7 @@ const Login = () => {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/auth/login",
+        `${API_BASE_URL}/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -99,7 +100,7 @@ const Login = () => {
       setResetLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/auth/reset-password",
+        `${API_BASE_URL}/auth/reset-password`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ExchangeDetailsData } from "../types/common";
+import { API_BASE_URL } from "../config";
 
 const ExchangeDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +16,7 @@ const ExchangeDetails = () => {
     const loadExchange = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/exchanges/${id}`
+          `${API_BASE_URL}/exchanges/${id}`
         );
 
         if (!res.ok) {
