@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
+import { API_BASE_URL } from "../config";
 
 interface LayoutProps {
   children: ReactNode;
@@ -72,7 +73,7 @@ const Layout = ({ children }: LayoutProps) => {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/auth/refresh",
+        `${API_BASE_URL}/auth/refresh`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -48,7 +48,9 @@ const Watchlist = () => {
     try {
       await fetch(
         `${API_BASE_URL}/watchlist/${coinId}`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+        }
       );
 
       // Remove instantly from UI

@@ -439,8 +439,8 @@ const CoinDetails = () => {
                 <button
                   onClick={handleTrade}
                   className={`px-4 py-2 rounded-lg ${tradeType === "buy"
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-red-600 hover:bg-red-700"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
                     }`}
                 >
                   Send OTP
@@ -450,8 +450,8 @@ const CoinDetails = () => {
                   onClick={confirmOtpAndTrade}
                   disabled={timer === 0}
                   className={`px-4 py-2 rounded-lg ${timer === 0
-                      ? "bg-gray-600 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
                     }`}
                 >
                   Verify & Confirm

@@ -23,7 +23,9 @@ const Home = () => {
   const fetchCoins = async () => {
     try {
       const res = await fetch(
+
         `${API_BASE_URL}/coins?search=${search}`
+
       );
 
       if (!res.ok) {
@@ -67,7 +69,9 @@ const Home = () => {
       if (watchlistIds.includes(coinId)) {
         await fetch(
           `${API_BASE_URL}/watchlist/${coinId}`,
-          { method: "DELETE" }
+          {
+            method: "DELETE",
+          }
         );
         setWatchlistIds(
           watchlistIds.filter((id) => id !== coinId)
